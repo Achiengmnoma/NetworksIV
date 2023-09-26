@@ -1,33 +1,45 @@
-from time import sleep
 import socket
-import random
-from datetime import datetime
-import atexit
+import threading
 
-botServer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+nickname = "Bot Bob"
+bobWMsg = "A welcome message from Bob: Hello everyone, my name is Bot Bob. Please send me messages, and I will reply with utterly random nonsense!"
 
-class botUsers:
-    def __init__(self,channel,nickname,host,port):
-        self.channel = channel
-        self.nickname = nickname
-        self.host = host
-        self.port = port
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client.connect(('127.0.0.1', 55555))
 
+# Send the bot's nickname and greeting message when it connects
+client.send(nickname.encode('ascii'))
 
-#Initiate a connection to the server
-    def connect_bot_server(self):
+def receive():
+    first_message_received = False
+    while True:
         try:
-            botServer.connect((self.host,self.port))    
+            message = client.recv(1024).decode('ascii')
+            if message:
+                if not first_message_received:
+                    first_message_received = True
+                    continue
+                # Check if the message starts with the bot's nickname
+                if message.startswith(nickname):
+                    print(message)  # Print bot's messages
+                else:
+                    print(f"Server: {message}\n")  # Print server messages
         except:
-            print("Server connection error")    
+            client.close()
+            break
+        break
 
-#Requesting for a coonnection to the server
-    def server_response(self):
-        try:
-            response = botServer.recv(1024)
-            if not response:
-                    raise Exception("No data received")
-            print("Response received:", response.decode("utf-8"))
-        except Exception as e:
-            print("Error receiving data:", e)
-    
+
+def write():
+    while True:
+        message = input("")
+        client.send(f'{nickname}: {message}'.encode('ascii'))
+
+
+receive_thread = threading.Thread(target=receive)
+receive_thread.start()
+
+write_thread = threading.Thread(target=write)
+write_thread.start()
+
+client.send(bobWMsg.encode('ascii') + b'\n')
