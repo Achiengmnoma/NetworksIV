@@ -5,11 +5,11 @@ from datetime import datetime
 import atexit
 
 botServer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
+#defin
 class botUsers:
-    def __init__(self,channel,nickname,host,port):
-        self.channel = channel
-        self.nickname = nickname
+    def __init__(self,channel,nicknames,host,port):
+        self.channel = channel(channel)
+        self.nicknames = nicknames
         self.host = host
         self.port = port
 
@@ -31,3 +31,27 @@ class botUsers:
         except Exception as e:
             print("Error receiving data:", e)
     
+#this is incomplete 
+    def joinChannel(self):
+        self.channel.channelName = ""
+        
+        #a new channel is created here
+
+    def commands(self,command):
+        try:
+            if command == "JOIN" :
+                self.joinChannel()
+            # # if command == "" :
+            # #     self.arguments = ""   
+
+        except:
+            print("Argument cannnot be retrieved at this time")
+
+
+
+
+class channel:
+    def __init__(self,channelName,channelTopic):
+        self.channelName = [] 
+
+
