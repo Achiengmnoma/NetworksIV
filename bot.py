@@ -9,11 +9,11 @@ client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(('127.0.0.1', 55555))
 
 
-#defin
+
 class botUsers:
-    def __init__(self,channel,nicknames,host,port):
-        self.channel = channel(channel)
-        self.nicknames = nicknames
+    def __init__(self,channel,nickname,host,port):
+        self.channel = channel
+        self.nickname = nickname
         self.host = host
         self.port = port
 
@@ -54,6 +54,7 @@ write_thread = threading.Thread(target=write)
 write_thread.start()
 
 client.send(bobWMsg.encode('ascii') + b'\n')
+
 
     
 #this is incomplete 
