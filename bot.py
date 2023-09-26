@@ -1,22 +1,11 @@
 import socket
 import threading
 
-
 nickname = "Bot Bob"
 bobWMsg = "A welcome message from Bob: Hello everyone, my name is Bot Bob. Please send me messages, and I will reply with utterly random nonsense!"
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(('127.0.0.1', 55555))
-
-
-#defin
-class botUsers:
-    def __init__(self,channel,nicknames,host,port):
-        self.channel = channel(channel)
-        self.nicknames = nicknames
-        self.host = host
-        self.port = port
-
 
 # Send the bot's nickname and greeting message when it connects
 client.send(nickname.encode('ascii'))
@@ -38,14 +27,11 @@ def receive():
         except:
             client.close()
             break
-        break
-
 
 def write():
     while True:
         message = input("")
         client.send(f'{nickname}: {message}'.encode('ascii'))
-
 
 receive_thread = threading.Thread(target=receive)
 receive_thread.start()
@@ -53,31 +39,4 @@ receive_thread.start()
 write_thread = threading.Thread(target=write)
 write_thread.start()
 
-client.send(bobWMsg.encode('ascii') + b'\n')
-
-    
-#this is incomplete 
-    def joinChannel(self):
-        self.channel.channelName = ""
-        
-        #a new channel is created here
-
-    def commands(self,command):
-        try:
-            if command == "JOIN" :
-                self.joinChannel()
-            # # if command == "" :
-            # #     self.arguments = ""   
-
-        except:
-            print("Argument cannnot be retrieved at this time")
-
-
-
-
-class channel:
-    def __init__(self,channelName,channelTopic):
-        self.channelName = [] 
-
-
-
+client.send(bobWMsg.encode('ascii') + b'\n')  # Send the bot's greeting message with a newline
