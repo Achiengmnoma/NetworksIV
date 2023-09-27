@@ -8,6 +8,8 @@ bobWMsg = "A welcome message from Bob: Hello everyone, my name is Bot Bob. Pleas
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(('127.0.0.1', 55555))
 
+# Send the bot's nickname and greeting message when it connects
+client.send(nickname.encode('ascii')+ b'\n')
 
 #defin
 class botUsers:
@@ -16,10 +18,6 @@ class botUsers:
         self.nicknames = nicknames
         self.host = host
         self.port = port
-
-
-# Send the bot's nickname and greeting message when it connects
-client.send(nickname.encode('ascii'))
 
 def receive():
     first_message_received = False
@@ -48,8 +46,8 @@ def write():
 
     
 #this is incomplete 
-def joinChannel(self):
-        self.channel.channelName = ""
+##def joinChannel(self):
+    ##    self.channel.channelName = ""
         
         #a new channel is created here
 
@@ -70,10 +68,5 @@ class channel:
     def __init__(self,channelName,channelTopic):
         self.channelName = [] 
 
-receive_thread = threading.Thread(target=receive)
-receive_thread.start()
-
-write_thread = threading.Thread(target=write)
-write_thread.start()
 
 client.send(bobWMsg.encode('ascii') + b'\n')
