@@ -5,8 +5,8 @@ import threading
 nickname = "Bot Bob"
 bobWMsg = "A welcome message from Bob: Hello everyone, my name is Bot Bob. Please send me messages, and I will reply with utterly random nonsense!"
 
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect(('127.0.0.1', 55555))
+client = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+client.connect(('::1', 6667))
 
 # Send the bot's nickname and greeting message when it connects
 client.send(nickname.encode('ascii')+ b'\n')
