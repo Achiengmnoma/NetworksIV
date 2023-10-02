@@ -1,60 +1,75 @@
+# Group 7:
+# Adam Smith (2449898)
+# Daniel Niven (2481553)
+# Stacy Onyango (2437819)
+# Ross Mcbride (r.s.z.mcbride)
+
 import socket
 
+# set the correct values for the address, and the port
+addr = '::1'
+port = 6667
+
+# defines the server class, in which the server operations are executed
 class Server:
-    def __init__(self, address, port):
-        self.server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-        self.users = []
-        self.nicknames = []
-        self.address = address
-        self.port = port
 
-    def start(self):
-        self.server.bind((self.address, self.port))
-        self.server.listen()
-        print(f"Server is listening on {self.address}:{self.port}...")
+    # creates the instance of the Server object, and instantiates the variables
+    def __init__(this, addr, port):
 
+        # socket connection, using IPv6
+        this.server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+
+        # creates empty arrays to store users and the nicknames of these users
+        this.users = []
+        this.nicks = []
+
+        # assigns the correct values to the addr and port variables of the object
+        this.addr = addr
+        this.port = port
+
+    def launch(this):
+
+        # binds the socket to the address and port
+        this.server.bind((this.addr, this.port))
+
+        # listens for connections, and limits the number of connections to 2 for now
+        this.server.listen(2)
+
+        # displays that the server is listening for connections, as well as the addr address and port that it is listening on
+        print("Server is listening on " + str(this.addr) + ":" + str(this.port))
+
+        # begins an infinite loop, so that new clients are always accepted by the server
+        # the following youtube video was partially referenced when writing this loop : https://www.youtube.com/watch?v=3UOyky9sEQY&t=940s
         while True:
-            user, address = self.server.accept()
-            print(f"Connected with {str(address)}")
 
-            user.send('NICK'.encode('ascii'))
-            nickname = user.recv(1024).decode('ascii')
+            # accepts the connection, and displays that the connection was succesful
+            user, addr = this.server.accept()
+            print("Succesffuly connected with " + str(addr))
 
-            if nickname in self.nicknames:
-                user.send("Please choose a unique username".encode('ascii'))
-                user.close()
-                continue
+            # receives the nickname of the client, and decodes it
+            nick = user.recv(1024).decode('ascii')
 
-            self.nicknames.append(nickname)
-            self.users.append(user)
+            # some very brief validation for the username
+            if nick in this.users:
+                user.send("Please choose a unique name!")
+            else:
+                # adds the user and their nickname to the relevant arrays
+                this.nicks.append(nick)
+                this.users.append(user)
+            
+            # welcomes the new client to the server, and tells all other clients that a new user has joined
+            print(f'Welcome {nick} to the Server!')
+            this.Send(f"{nick} joined the chat!".encode('ascii'))
+            user.send(f'\nConnected!'.encode('ascii'))
 
-            print(f'User nickname is {nickname}!')
-            self.broadcast(f'{nickname} joined the chat!'.encode('ascii'))
-            user.send('Connected!'.encode('ascii'))
+    # send function, which is used to send messages to the clients
+    def Send(this, message):
+        for user in this.users:
+            if str(message).startswith("/"):
+                user.send("Error!")
+            else:
+                user.send(message)
 
-    def broadcast(self, message):
-        for user in self.users:
-            user.send(message)
-
-    def handle(self, user):
-        while True:
-            try:
-                message = user.recv(1024)
-                if not message:
-                    index = self.users.index(user)
-                    nickname = self.nicknames[index]
-                    self.broadcast(f'{nickname} left the chat!'.encode('ascii'))
-                    self.nicknames.remove(nickname)
-                    self.users.remove(user)
-                    user.close()
-                    break
-                self.broadcast(message)
-            except Exception as e:
-                print(f"An error occurred :(): {str(e)}")
-                break
-
-if __name__ == "__main__":
-    address = '::1'
-    port = 6667
-    server = Server(address, port)
-    server.start()
+# creates the new instance of the server, and launches it
+server = Server(addr, port)
+server.launch()

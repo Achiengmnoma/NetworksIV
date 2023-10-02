@@ -1,72 +1,82 @@
+# Group 7:
+# Adam Smith (2449898)
+# Daniel Niven (2481553)
+# Stacy Onyango (2437819)
+# Ross Mcbride (r.s.z.mcbride)
+
 import socket
-import threading
 
+# set the correct values for the nickname, address, and port
+nick = "Bob"
+addr = "::1"
+port = 6667
 
-nickname = "Bot Bob"
+# a welcome message, that is displayed to all clients when the bot joins
 bobWMsg = "A welcome message from Bob: Hello everyone, my name is Bot Bob. Please send me messages, and I will reply with utterly random nonsense!"
 
-client = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-client.connect(('::1', 6667))
-
-# Send the bot's nickname and greeting message when it connects
-client.send(nickname.encode('ascii')+ b'\n')
-
-#defin
+# defines the botUsers class, in which the bot operations are executed
 class botUsers:
-    def __init__(self,channel,nicknames,host,port):
-        self.channel = channel(channel)
-        self.nicknames = nicknames
-        self.host = host
-        self.port = port
 
-def receive():
-    first_message_received = False
-    while True:
-        try:
-            message = client.recv(1024).decode('ascii')
-            if message:
-                if not first_message_received:
-                    first_message_received = True
-                    continue
-                # Check if the message starts with the bot's nickname
-                if message.startswith(nickname):
-                    print(message)  # Print bot's messages
-                else:
-                    print(f"Server: {message}\n")  # Print server messages
-        except:
-            client.close()
-            break
-        break
+    # creates the instance of the botUsers object, and instantiates the variables
+    def __init__(bot,nick,addr,port):
 
+        # socket connection, using IPv6
+        bot.server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
 
-def write():
-    while True:
-        message = input("")
-        client.send(f'{nickname}: {message}'.encode('ascii'))
+        # assigns the correct values to the nickname, addr, and port variables of the object
+        bot.nick = nick
+        bot.addr = addr
+        bot.port = port
 
-    
-#this is incomplete 
-##def joinChannel(self):
-    ##    self.channel.channelName = ""
-        
-        #a new channel is created here
+    def launch(bot):
 
-def commands(self,command):
-        try:
-            if command == "JOIN" :
-                self.joinChannel()
-            # # if command == "" :
-            # #     self.arguments = ""   
+        # connects the socket to the addr address and port
+        bot.server.connect((bot.addr, bot.port))
 
-        except:
-            print("Argument cannnot be retrieved at this time")
+        # displays that the bot is attempting to connect to the server
+        print ("bot is attempting to connect to " + str(bot.addr) + ":" + str(bot.port))
 
+        # sends the nickname and welcome message to the server
+        bot.server.send(bot.nick.encode('ascii') + b'\n')
+        bot.server.send(bobWMsg.encode('ascii') + b'\n')
 
+        # displays that the bot has connected, and maintains the connecion
+        while True:
+            print(str(bot.nick) + " Connected to " + str(bot.addr) + ":" + str(bot.port))
+            message = input("")
+            bot.server.send(f'{bot.nick}: {message}'.encode('ascii'))
 
+    # receive function, which receives messages from other clients and will (eventually) respond to these
+    def receive(bot):
+        first_message_received = False
 
-class channel:
-    def __init__(self,channelName,channelTopic):
-        self.channelName = [] 
+        # starts an infinite loop, so that the bot is always accepitng messages from other clients
+        while True:
+            try:
 
+                # receives a message from another client
+                message = bot.server.recv(1024).decode('ascii')
+                if message:
+                    if not first_message_received:
+                        first_message_received = True
+                        continue
 
-client.send(bobWMsg.encode('ascii') + b'\n')
+                    # Check if the message starts with the bot's nickname
+                    if message.startswith(bot.nick):
+                        print(message)  # Print bot's messages
+                    else:
+                        print(f"Server: {message}\n")  # Print server messages
+            except:
+                bot.server.close()
+                break
+
+    # the write function, which enables the bot to send messages to other clients
+    # still a work in progress, as the bot does not currently reply to clients messages
+    def write(bot):
+        while True:
+            message = input("")
+            bot.server.send(f'{bot.nick}: {message}'.encode('ascii'))
+
+# creates the new instance of the bot, and launches it
+bot = botUsers(nick, addr, port)
+bot.launch()
