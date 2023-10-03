@@ -36,7 +36,7 @@ class Server:
         this.server.listen(2)
 
         # displays that the server is listening for connections, as well as the addr address and port that it is listening on
-        print("Server is listening on " + str(this.addr) + ":" + str(this.port))
+        print("Listening on port " + str(this.port))
 
         # begins an infinite loop, so that new clients are always accepted by the server
         # the following youtube video was partially referenced when writing this loop : https://www.youtube.com/watch?v=3UOyky9sEQY&t=940s
@@ -44,9 +44,10 @@ class Server:
 
             # accepts the connection, and displays that the connection was succesful
             user, addr = this.server.accept()
-            print("Succesffuly connected with " + str(addr))
+            print("Accepted connection from " + str(addr))
 
             # receives the nickname of the client, and decodes it
+            cap = user.recv(1024).decode('ascii')
             nick = user.recv(1024).decode('ascii')
 
             # some very brief validation for the username
@@ -58,9 +59,8 @@ class Server:
                 this.users.append(user)
             
             # welcomes the new client to the server, and tells all other clients that a new user has joined
-            print(f'Welcome {nick} to the Server!')
-            this.Send(f"{nick} joined the chat!".encode('ascii'))
-            user.send(f'\nConnected!'.encode('ascii'))
+            print(f'{cap}')
+            print(f'{nick}')
 
     # send function, which is used to send messages to the clients
     def Send(this, message):
