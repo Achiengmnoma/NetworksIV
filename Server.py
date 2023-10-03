@@ -48,19 +48,23 @@ class Server:
 
             # receives the nickname of the client, and decodes it
             cap = user.recv(1024).decode('ascii')
-            nick = user.recv(1024).decode('ascii')
+            full = user.recv(1024).decode('ascii')
+            nick = ''.join(full.split("NICK")[1].split("USER")[0])
+            username = ''.join(full.split("USER")[1].split("0")[0])
+            realname = full.split(":",1)[1]
+            
 
             # some very brief validation for the username
-            if nick in this.users:
-                user.send("Please choose a unique name!")
-            else:
+            #if nick in this.users:
+                #user.send("Please choose a unique name!")
+            #else:
                 # adds the user and their nickname to the relevant arrays
-                this.nicks.append(nick)
-                this.users.append(user)
+                #this.nicks.append(nick)
+                #this.users.append(user)
             
             # welcomes the new client to the server, and tells all other clients that a new user has joined
             print(f'{cap}')
-            print(f'{nick}')
+            print(f'NICK {nick}\r\nUSER {username} 0 * :{realname}\r\n')
 
     # send function, which is used to send messages to the clients
     def Send(this, message):
