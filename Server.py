@@ -48,10 +48,12 @@ class Server:
 
             # receives the nickname of the client, and decodes it
             cap = user.recv(1024).decode('ascii')
-            full = user.recv(1024).decode('ascii')
-            nick = ''.join(full.split("NICK")[1].split("USER")[0])
-            username = ''.join(full.split("USER")[1].split("0")[0])
-            realname = full.split(":",1)[1]
+            fullname = user.recv(1024).decode('ascii')
+            nick = ''.join(fullname.split("NICK")[1].split("USER")[0])
+            username = ''.join(fullname.split("USER")[1].split("0")[0])
+            realname = fullname.split(":",1)[1]
+
+            user.send(nick.encode('ascii'))
             
 
             # some very brief validation for the username

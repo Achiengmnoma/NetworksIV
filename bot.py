@@ -7,7 +7,7 @@
 import socket
 
 # set the correct values for the nickname, address, and port
-nick = "Bob"
+fullname = "NICK Bot USER ROBOT 0 * :Robot Junior"
 cap = "CAP LS 302"
 addr = "::1"
 port = 6667
@@ -19,13 +19,13 @@ bobWMsg = "A welcome message from Bob: Hello everyone, my name is Bot Bob. Pleas
 class botUsers:
 
     # creates the instance of the botUsers object, and instantiates the variables
-    def __init__(bot,nick,cap,addr,port):
+    def __init__(bot,fullname,cap,addr,port):
 
         # socket connection, using IPv6
         bot.server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
 
         # assigns the correct values to the nickname, addr, and port variables of the object
-        bot.nick = nick
+        bot.fullname = fullname
         bot.cap = cap
         bot.addr = addr
         bot.port = port
@@ -41,7 +41,9 @@ class botUsers:
 
         # sends the nickname and welcome message to the server
         bot.server.send(bot.cap.encode('ascii') + b'\r\n')
-        bot.server.send(bot.nick.encode('ascii') + b'\r\n')
+        bot.server.send(bot.fullname.encode('ascii') + b'\r\n')
+
+        bot.nick = bot.server.recv(1024).decode('ascii')
 
         # displays that the bot has connected, and maintains the connecion
         while True:
@@ -81,5 +83,5 @@ class botUsers:
             bot.server.send(f'{bot.nick}: {message}'.encode('ascii'))
 
 # creates the new instance of the bot, and launches it
-bot = botUsers(nick, cap, addr, port)
+bot = botUsers(fullname, cap, addr, port)
 bot.launch()
