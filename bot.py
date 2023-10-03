@@ -8,6 +8,7 @@ import socket
 
 # set the correct values for the nickname, address, and port
 nick = "Bob"
+cap = "CAP LS 302"
 addr = "::1"
 port = 6667
 
@@ -18,13 +19,14 @@ bobWMsg = "A welcome message from Bob: Hello everyone, my name is Bot Bob. Pleas
 class botUsers:
 
     # creates the instance of the botUsers object, and instantiates the variables
-    def __init__(bot,nick,addr,port):
+    def __init__(bot,nick,cap,addr,port):
 
         # socket connection, using IPv6
         bot.server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
 
         # assigns the correct values to the nickname, addr, and port variables of the object
         bot.nick = nick
+        bot.cap = cap
         bot.addr = addr
         bot.port = port
 
@@ -34,15 +36,16 @@ class botUsers:
         bot.server.connect((bot.addr, bot.port))
 
         # displays that the bot is attempting to connect to the server
-        print ("bot is attempting to connect to " + str(bot.addr) + ":" + str(bot.port))
+        print ("Looking up " + str(bot.addr))
+        print ("Connecting to " + str(bot.addr) + ":" + str(bot.port))
 
         # sends the nickname and welcome message to the server
+        bot.server.send(bot.cap.encode('ascii') + b'\n')
         bot.server.send(bot.nick.encode('ascii') + b'\n')
-        bot.server.send(bobWMsg.encode('ascii') + b'\n')
 
         # displays that the bot has connected, and maintains the connecion
         while True:
-            print(str(bot.nick) + " Connected to " + str(bot.addr) + ":" + str(bot.port))
+            print("Connected. Now logging in")
             message = input("")
             bot.server.send(f'{bot.nick}: {message}'.encode('ascii'))
 
@@ -78,5 +81,5 @@ class botUsers:
             bot.server.send(f'{bot.nick}: {message}'.encode('ascii'))
 
 # creates the new instance of the bot, and launches it
-bot = botUsers(nick, addr, port)
+bot = botUsers(nick, cap, addr, port)
 bot.launch()
