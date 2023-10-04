@@ -51,7 +51,6 @@ class botUsers:
             print("Connected. Now logging in")
             message = input("")
             bot.server.send(f'{bot.nick}: {message}'.encode('ascii'))
-            messages()
 
     # receive function, which receives messages from other clients and will (eventually) respond to these
     def receive(bot):
