@@ -7,7 +7,7 @@
 import socket
 
 # set the correct values for the nickname, address, and port
-fullname = "NICK Bot USER ROBOT 0 * :Robot Junior"
+fullname = "NICK SuperBot USER ROBOT 0 * :Robot Junior"
 cap = "CAP LS 302"
 addr = "::1"
 port = 6667
