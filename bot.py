@@ -5,7 +5,7 @@
 # Ross Mcbride (r.s.z.mcbride)
 
 import socket
-import listening
+from listening import createBotChannel, listeningFor
 
 # set the correct values for the nickname, address, and port
 fullname = "NICK SuperBot USER ROBOT 0 * :Robot Junior"
@@ -31,6 +31,7 @@ class botUsers:
         bot.addr = addr
         bot.port = port
 
+
     def launch(bot):
 
         # connects the socket to the addr address and port
@@ -46,11 +47,17 @@ class botUsers:
 
         bot.nick = ''.join(bot.fullname.split("NICK")[1].split("USER")[0])
 
+       # Creates a channel for the bot to recieve message in
+        createBotChannel(bot.server)
+        
         # displays that the bot has connected, and maintains the connecion
         while True:
             print("Connected. Now logging in")
             message = input("")
             bot.server.send(f'{bot.nick}: {message}'.encode('ascii'))
+
+         
+
 
     # receive function, which receives messages from other clients and will (eventually) respond to these
     def receive(bot):
@@ -72,6 +79,9 @@ class botUsers:
                         print(message)  # Print bot's messages
                     else:
                         print(f"Server: {message}\n")  # Print server messages
+
+                #listens for messages from the client and then does something respectivly
+                listeningFor(bot.server, message)
             except:
                 bot.server.close()
                 break
