@@ -44,14 +44,19 @@ class Server:
 
             # accepts the connection, and displays that the connection was succesful
             user, addr = this.server.accept()
-            print("Accepted connection from " + str(addr))
+            this.address = str(addr).split("'")[1].split("'")[0] + ":" + str(addr).split(", ")[1].split(",")[0]
+            print("Accepted connection from " + this.address)
 
             # receives the nickname of the client, and decodes it
             cap = user.recv(1024).decode('ascii')
-            full = user.recv(1024).decode('ascii')
-            nick = ''.join(full.split("NICK")[1].split("USER")[0])
-            username = ''.join(full.split("USER")[1].split("0")[0])
-            realname = full.split(":",1)[1]
+            fullname = user.recv(1024).decode('ascii')
+            nick = ''.join(fullname.split("NICK")[1].split("USER")[0])
+            this.nicks.append(nick)
+            username = ''.join(fullname.split("USER")[1].split("0")[0])
+            this.users.append(username)
+            realname = fullname.split(":",1)[1]
+
+            #user.send(nick.encode('ascii'))
             
 
             # some very brief validation for the username
@@ -69,10 +74,11 @@ class Server:
     # send function, which is used to send messages to the clients
     def Send(this, message):
         for user in this.users:
-            if str(message).startswith("/"):
-                user.send("Error!")
-            else:
-                user.send(message)
+            user.send(message)
+
+    def Receive(this, message):
+        this.server.recv(1024).decode('ascii')
+        print(f'{this.address} TEST')
 
 # creates the new instance of the server, and launches it
 server = Server(addr, port)
