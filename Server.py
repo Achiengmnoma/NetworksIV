@@ -50,10 +50,12 @@ class Server:
             cap = user.recv(1024).decode('ascii')
             fullname = user.recv(1024).decode('ascii')
             nick = ''.join(fullname.split("NICK")[1].split("USER")[0])
+            this.nicks.append(nick)
             username = ''.join(fullname.split("USER")[1].split("0")[0])
+            this.users.append(username)
             realname = fullname.split(":",1)[1]
 
-            user.send(nick.encode('ascii'))
+            #user.send(nick.encode('ascii'))
             
 
             # some very brief validation for the username
@@ -71,10 +73,7 @@ class Server:
     # send function, which is used to send messages to the clients
     def Send(this, message):
         for user in this.users:
-            if str(message).startswith("/"):
-                user.send("Error!")
-            else:
-                user.send(message)
+            user.send(message)
 
 # creates the new instance of the server, and launches it
 server = Server(addr, port)

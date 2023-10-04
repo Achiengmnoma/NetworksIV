@@ -40,10 +40,10 @@ class botUsers:
         print ("Connecting to " + str(bot.addr) + ":" + str(bot.port))
 
         # sends the nickname and welcome message to the server
-        bot.server.send(bot.cap.encode('ascii') + b'\r\n')
-        bot.server.send(bot.fullname.encode('ascii') + b'\r\n')
+        bot.server.send(bot.cap.encode('ascii') + b"\r\n")
+        bot.server.send(bot.fullname.encode('ascii') + b"\r\n")
 
-        bot.nick = bot.server.recv(1024).decode('ascii')
+        bot.nick = ''.join(bot.fullname.split("NICK")[1].split("USER")[0])
 
         # displays that the bot has connected, and maintains the connecion
         while True:
