@@ -5,6 +5,7 @@
 # Ross Mcbride (r.s.z.mcbride)
 
 import socket
+import listening
 
 # set the correct values for the nickname, address, and port
 fullname = "NICK Bot USER ROBOT 0 * :Robot Junior"
@@ -50,6 +51,7 @@ class botUsers:
             print("Connected. Now logging in")
             message = input("")
             bot.server.send(f'{bot.nick}: {message}'.encode('ascii'))
+            messages()
 
     # receive function, which receives messages from other clients and will (eventually) respond to these
     def receive(bot):
