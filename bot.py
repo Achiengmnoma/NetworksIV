@@ -8,7 +8,7 @@ import socket
 from listening import createBotChannel, listeningFor
 
 # set the correct values for the nickname, address, and port
-fullname = "NICK SuperBot USER ROBOT 0 * :Robot Junior"
+nick = "NICK SuperBot USER ROBOT 0 * :Robot Junior"
 cap = "CAP LS 302"
 addr = "::1"
 port = 6667
@@ -49,9 +49,9 @@ class botUsers:
 
         # sends the nickname and welcome message to the server
         bot.server.send(bot.cap.encode('ascii') + b"\r\n")
-        bot.server.send(bot.fullname.encode('ascii') + b"\r\n")
+        bot.server.send(bot.nick.encode('ascii') + b"\r\n")
 
-        bot.nick = ''.join(bot.fullname.split("NICK")[1].split("USER")[0])
+        bot.nick = ''.join(bot.nick.split("NICK")[1].split("USER")[0])
 
        # Creates a channel for the bot to recieve message in
         createBotChannel(bot.server)
@@ -135,5 +135,5 @@ class botUsers:
             bot.server.send(f'{bot.nick}: {message}'.encode('ascii'))
 
 # creates the new instance of the bot, and launches it
-bot = botUsers(fullname, cap, addr, port)
+bot = botUsers(nick, cap, addr, port)
 bot.launch()
