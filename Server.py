@@ -44,7 +44,8 @@ class Server:
 
             # accepts the connection, and displays that the connection was succesful
             user, addr = this.server.accept()
-            print("Accepted connection from " + str(addr))
+            this.address = str(addr).split("'")[1].split("'")[0] + ":" + str(addr).split(", ")[1].split(",")[0]
+            print("Accepted connection from " + this.address)
 
             # receives the nickname of the client, and decodes it
             cap = user.recv(1024).decode('ascii')
@@ -74,6 +75,10 @@ class Server:
     def Send(this, message):
         for user in this.users:
             user.send(message)
+
+    def Receive(this, message):
+        this.server.recv(1024).decode('ascii')
+        print(f'{this.address} TEST')
 
 # creates the new instance of the server, and launches it
 server = Server(addr, port)
