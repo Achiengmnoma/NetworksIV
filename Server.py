@@ -49,12 +49,15 @@ class Server:
 
             # receives the nickname of the client, and decodes it
             cap = user.recv(1024).decode('ascii')
+            this.DispReceive(cap)
             fullname = user.recv(1024).decode('ascii')
             nick = ''.join(fullname.split("NICK")[1].split("USER")[0])
             this.nicks.append(nick)
             username = ''.join(fullname.split("USER")[1].split("0")[0])
             this.users.append(username)
             realname = fullname.split(":",1)[1]
+
+            this.DispReceive(f'NICK {nick}USER {username} 0 * :{realname}')
 
             #user.send(nick.encode('ascii'))
             
@@ -67,18 +70,16 @@ class Server:
                 #this.nicks.append(nick)
                 #this.users.append(user)
             
-            # welcomes the new client to the server, and tells all other clients that a new user has joined
-            print(f'{cap}')
-            print(f'NICK {nick}\r\nUSER {username} 0 * :{realname}\r\n')
+            # welcomes the new client to the server, and tells all other clients that a new user has 
+            #print(f'{cap}')
 
     # send function, which is used to send messages to the clients
     def Send(this, message):
         for user in this.users:
             user.send(message)
 
-    def Receive(this, message):
-        this.server.recv(1024).decode('ascii')
-        print(f'{this.address} TEST')
+    def DispReceive(this, msg):
+        print(f'[{this.address}] -> b {msg}\r\n')
 
 # creates the new instance of the server, and launches it
 server = Server(addr, port)
