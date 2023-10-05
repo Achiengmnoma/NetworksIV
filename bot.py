@@ -8,7 +8,8 @@ import socket
 from listening import createBotChannel, listeningFor
 
 # set the correct values for the nickname, address, and port
-nick = "NICK SuperBot USER ROBOT 0 * :Robot Junior"
+nick = "SuperBot"
+user = "ROBOT 0 * :Robot Junior"
 cap = "CAP LS 302"
 addr = "::1"
 port = 6667
@@ -22,7 +23,7 @@ class botUsers:
 
     # creates the instance of the botUsers object, and instantiates the variables
 
-    def __init__(bot,nick,cap,addr,port,channel):
+    def __init__(bot,nick,cap,addr,port):
 
 
         # socket connection, using IPv6
@@ -31,10 +32,11 @@ class botUsers:
 
         # assigns the correct values to the nickname, addr, and port variables of the object
         bot.nick = nick
+        bot.user = user
         bot.cap = cap
         bot.addr = addr
         bot.port = port
-        bot.channel = channel
+        bot.has_created_channel = False
         
 
 
@@ -48,19 +50,37 @@ class botUsers:
         print ("Connecting to " + str(bot.addr) + ":" + str(bot.port))
 
         # sends the nickname and welcome message to the server
-        bot.server.send(bot.cap.encode('ascii') + b"\r\n")
-        bot.server.send(bot.nick.encode('ascii') + b"\r\n")
+        bot.server.sendall(bytes("PASS Test1234\r\n", "ascii"))
+        bot.server.sendall(bytes("USER SuperBot SuperBot SuperBot :SuperBot\r\n", "ascii"))
+        bot.server.sendall(bytes("NICK SuperBot\r\n", "ascii"))
+        # bot.server.send(bot.cap.encode('ascii') + b"\r\n")
+        # bot.server.send(bot.nick.encode('ascii')+ b"\r\n")
+        # bot.server.send(bot.user.encode('ascii')+ b"\r\n")
 
-        bot.nick = ''.join(bot.nick.split("NICK")[1].split("USER")[0])
-
-       # Creates a channel for the bot to recieve message in
-        createBotChannel(bot.server)
+        #bot.nick = ''.join(bot.nick.split("NICK")[1].split("USER")[0])
         
-        # displays that the bot has connected, and maintains the connecion
+        #displays that the bot has connected, and maintains the connecion
         while True:
-            print("Connected. Now logging in")
-            message = input("")
-            bot.server.send(f'{bot.nick}: {message}'.encode('ascii'))
+            message = bot.server.recv(1024).decode('ascii')
+            print(f"Received: {message}")
+            if message.startswith("PING"):
+                pong_response = "PONG :" + message.split(":")[1] + "\r\n"
+                bot.sendall(bytes(pong_response, "ascii"))
+
+            if "004" in message:  # 004 is a common numeric for successful registration
+                if not bot.has_created_channel:
+                    print("Creating bot channel")
+                    createBotChannel(bot.server, message)
+                    bot.has_created_channel = True
+            
+            elif "some_other_condition" in message:  # Replace with other server messages you want to handle
+                # Do something else
+                pass
+            
+            else:
+                # Default handling of received messages
+                print("Connected. Now logging in")
+                bot.server.send(f'{bot.nick}: {message}'.encode('ascii'))
 
   
 
@@ -107,23 +127,27 @@ class botUsers:
         # starts an infinite loop, so that the bot is always accepitng messages from other clients
         while True:
             try:
-
                 # receives a message from another client
                 message = bot.server.recv(1024).decode('ascii')
+                print(f"Received from server: {message}")
                 if message:
                     if not first_message_received:
                         first_message_received = True
                         continue
 
+                    if message.startswith("PING"):
+                        bot.server.send(f"PONG {message.split(':')[1]}".encode('ascii'))
+
                     # Check if the message starts with the bot's nickname
-                    if message.startswith(bot.nick):
+                    elif message.startswith(bot.nick):
                         print(message)  # Print bot's messages
                     else:
                         print(f"Server: {message}\n")  # Print server messages
 
                 #listens for messages from the client and then does something respectivly
                 listeningFor(bot.server, message)
-            except:
+            except Exception as e:
+                print(f"An error occurred: {e}")
                 bot.server.close()
                 break
 
