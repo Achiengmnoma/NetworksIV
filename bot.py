@@ -47,9 +47,9 @@ class botUsers:
         print ("Connecting to " + str(bot.addr) + ":" + str(bot.port))
 
         # sends the PASS USER and NICK and welcome message to the server
-        bot.server.sendall(bytes("PASS Test1234\r\n", "ascii"))
-        bot.server.sendall(bytes("USER SuperBot SuperBot SuperBot :SuperBot\r\n", "ascii"))
-        bot.server.sendall(bytes("NICK SuperBot\r\n", "ascii"))
+        bot.server.send(bytes("PASS Test1234\r\n", "ascii"))
+        bot.server.send(bytes("USER SuperBot SuperBot SuperBot :SuperBot\r\n", "ascii"))
+        bot.server.send(bytes("NICK SuperBot\r\n", "ascii"))
         
         #displays that the bot has connected, and maintains the connecion
         while True:
@@ -57,7 +57,7 @@ class botUsers:
             print(f"Received: {message}")
             if message.startswith("PING"):
                 pong_response = "PONG :" + message.split(":")[1] + "\r\n"
-                bot.sendall(bytes(pong_response, "ascii"))
+                bot.send(bytes(pong_response, "ascii"))
 
             if "004" in message:  # 004 is a common numeric for successful registration
                 print(bot.has_created_channel)
