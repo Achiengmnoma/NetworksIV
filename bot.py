@@ -8,7 +8,8 @@ import socket
 from listening import createBotChannel, listeningFor
 
 # set the correct values for the nickname, address, and port
-nick = "NICK SuperBot USER ROBOT 0 * :Robot Junior"
+nick = "SuperBot"
+user = "ROBOT 0 * :Robot Junior"
 cap = "CAP LS 302"
 addr = "::1"
 port = 6667
@@ -22,21 +23,19 @@ class botUsers:
 
     # creates the instance of the botUsers object, and instantiates the variables
 
-    def __init__(bot,nick,cap,addr,port,channel):
-
+    def __init__(bot,nick,cap,addr,port):
 
         # socket connection, using IPv6
         bot.server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-        
 
         # assigns the correct values to the nickname, addr, and port variables of the object
         bot.nick = nick
+        bot.user = user
         bot.cap = cap
         bot.addr = addr
         bot.port = port
-        bot.channel = channel
+        bot.has_created_channel = False
         
-
 
     def launch(bot):
 
@@ -47,58 +46,25 @@ class botUsers:
         print ("Looking up " + str(bot.addr))
         print ("Connecting to " + str(bot.addr) + ":" + str(bot.port))
 
-        # sends the nickname and welcome message to the server
-        bot.server.send(bot.cap.encode('ascii') + b"\r\n")
-        bot.server.send(bot.nick.encode('ascii') + b"\r\n")
-
-        bot.nick = ''.join(bot.nick.split("NICK")[1].split("USER")[0])
-
-       # Creates a channel for the bot to recieve message in
-        createBotChannel(bot.server)
+        # sends the PASS USER and NICK and welcome message to the server
+        bot.server.sendall(bytes("PASS Test1234\r\n", "ascii"))
+        bot.server.sendall(bytes("USER SuperBot SuperBot SuperBot :SuperBot\r\n", "ascii"))
+        bot.server.sendall(bytes("NICK SuperBot\r\n", "ascii"))
         
-        # displays that the bot has connected, and maintains the connecion
+        #displays that the bot has connected, and maintains the connecion
         while True:
-            print("Connected. Now logging in")
-            message = input("")
-            bot.server.send(f'{bot.nick}: {message}'.encode('ascii'))
+            message = bot.server.recv(1024).decode('ascii')
+            print(f"Received: {message}")
+            if message.startswith("PING"):
+                pong_response = "PONG :" + message.split(":")[1] + "\r\n"
+                bot.sendall(bytes(pong_response, "ascii"))
 
-  
-
-    #sends the join channels
-    def join(bot,nick,channel):
-        try:
-            nicks = []
-            if nick not in bot.nicks:
-                nicks.append(nick)
-            bot.server.send(f"JOIN {channel}\r\n".encode())
-        except:
-            print("Cannot join the channel")
-
-     #sends the KICK command to the server  
-    def removeUser(bot,nick,channel):
-        nicks = []
-        if nick in bot.nicks:
-            nicks.remove(nick)
-
-        bot.server.send(f"KICK {nick} from {channel} channel".encode())  
-
-        
-    #COMMANDS THEY ARE INCOMPLETE JUST PROVIDING A TEMPLATE OF HANDLING THEM
-    #used to handle the different commands 
-    def commands(option):
-        if option == "JOIN":
-            channelJoin = ""
-            nick = ""
-            bot.join(nick,channelJoin)
-            print("Joining channels")    #more should be done for it to join channels
-
-        #used to remove nicknames(user) from channels
-        elif option == "KICK":
-            nickname = ""
-            channelname = ""
-            bot.removeUser(nickname,channelname)  
-
-
+            if "004" in message:  # 004 is a common numeric for successful registration
+                print(bot.has_created_channel)
+                if not bot.has_created_channel:
+                    print("Creating bot channel")
+                    createBotChannel(bot.server, message)
+                    bot.has_created_channel = True
    
     # receive function, which receives messages from other clients and will (eventually) respond to these
     def receive(bot):
@@ -107,23 +73,27 @@ class botUsers:
         # starts an infinite loop, so that the bot is always accepitng messages from other clients
         while True:
             try:
-
                 # receives a message from another client
                 message = bot.server.recv(1024).decode('ascii')
+                print(f"Received from server: {message}")
                 if message:
                     if not first_message_received:
                         first_message_received = True
                         continue
 
+                    if message.startswith("PING"):
+                        bot.server.send(f"PONG {message.split(':')[1]}".encode('ascii'))
+
                     # Check if the message starts with the bot's nickname
-                    if message.startswith(bot.nick):
+                    elif message.startswith(bot.nick):
                         print(message)  # Print bot's messages
                     else:
                         print(f"Server: {message}\n")  # Print server messages
 
                 #listens for messages from the client and then does something respectivly
                 listeningFor(bot.server, message)
-            except:
+            except Exception as e:
+                print(f"An error occurred: {e}")
                 bot.server.close()
                 break
 
