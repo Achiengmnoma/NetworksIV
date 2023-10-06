@@ -49,7 +49,7 @@ class botUsers:
         print ("Looking up " + str(bot.addr))
         print ("Connecting to " + str(bot.addr) + ":" + str(bot.port))
 
-        # sends the nickname and welcome message to the server
+        # sends the PASS USER and NICK and welcome message to the server
         bot.server.sendall(bytes("PASS Test1234\r\n", "ascii"))
         bot.server.sendall(bytes("USER SuperBot SuperBot SuperBot :SuperBot\r\n", "ascii"))
         bot.server.sendall(bytes("NICK SuperBot\r\n", "ascii"))
@@ -68,19 +68,20 @@ class botUsers:
                 bot.sendall(bytes(pong_response, "ascii"))
 
             if "004" in message:  # 004 is a common numeric for successful registration
+                print(bot.has_created_channel)
                 if not bot.has_created_channel:
                     print("Creating bot channel")
                     createBotChannel(bot.server, message)
                     bot.has_created_channel = True
             
-            elif "some_other_condition" in message:  # Replace with other server messages you want to handle
-                # Do something else
-                pass
+            # elif "some_other_condition" in message:  # Replace with other server messages you want to handle
+            #     # Do something else
+            #     pass
             
-            else:
-                # Default handling of received messages
-                print("Connected. Now logging in")
-                bot.server.send(f'{bot.nick}: {message}'.encode('ascii'))
+            # else:
+            #     # Default handling of received messages
+            #     print("Connected. Now logging in")
+            #     bot.server.send(f'{bot.nick}: {message}'.encode('ascii'))
 
   
 
