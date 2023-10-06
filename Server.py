@@ -4,6 +4,7 @@
 # Stacy Onyango (2437819)
 # Ross Mcbride (r.s.z.mcbride)
 
+from asyncio.windows_events import NULL
 import socket
 
 # set the correct values for the address, and the port
@@ -48,13 +49,18 @@ class Server:
             print("Accepted connection from " + this.address)
 
             # receives the nickname of the client, and decodes it
-            cap = user.recv(1024).decode('ascii')
-            fullname = user.recv(1024).decode('ascii')
-            nick = ''.join(fullname.split("NICK")[1].split("USER")[0])
-            this.nicks.append(nick)
-            username = ''.join(fullname.split("USER")[1].split("0")[0])
-            this.users.append(username)
-            realname = fullname.split(":",1)[1]
+            PASS = user.recv(1024).decode('ascii')   
+            NICK = user.recv(1024).decode('ascii')
+            USER = user.recv(1024).decode('ascii')
+            print("First thing received:")
+            this.DispReceive(PASS)
+            print("Second thing Received:")
+            this.DispReceive(NICK)
+            print("Third thing received:")
+            this.DispReceive(USER)
+            #if PASS != NULL:
+                #this.DispReceive(f"THIS WILL EVENTUALLY BE A BUNCH OF REGISTRATION INFORMATION")
+            #this.DispReceive(f'NICK {nick}USER {username} 0 * :{realname}')
 
             #user.send(nick.encode('ascii'))
             
@@ -68,17 +74,17 @@ class Server:
                 #this.users.append(user)
             
             # welcomes the new client to the server, and tells all other clients that a new user has joined
-            print(f'{cap}')
-            print(f'NICK {nick}\r\nUSER {username} 0 * :{realname}\r\n')
 
     # send function, which is used to send messages to the clients
     def Send(this, message):
         for user in this.users:
             user.send(message)
 
-    def Receive(this, message):
-        this.server.recv(1024).decode('ascii')
-        print(f'{this.address} TEST')
+    def DispReceive(this, msg):
+        print(f"[{this.address}] -> b {msg}")
+
+    def DispSend(this, msg):
+        print(f"[{this.address}] <- b {msg}")
 
 # creates the new instance of the server, and launches it
 server = Server(addr, port)
