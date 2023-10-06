@@ -5,7 +5,7 @@
 # Ross Mcbride (r.s.z.mcbride)
 
 import socket
-from listening import createBotChannel, listeningFor
+import random
 
 # set the correct values for the nickname, address, and port
 nick = "SuperBot"
@@ -35,8 +35,66 @@ class botUsers:
         bot.addr = addr
         bot.port = port
         bot.has_created_channel = False
-        
+       
+    def createBotChannel(server, message):
+        channel = "#Bot_Commands"
+        bot.server.send(bytes(f"JOIN {channel}\r\n", "ascii"))
 
+    def listeningFor(message):
+        channel = "#Bot_Commands"
+        # What commands the bot is listening in for in the #Bot_Commands chat.
+        if message.find(f'PRIVMSG {channel} :!hello') != -1 or message.find(f'PRIVMSG {channel} :!hello') > 5:
+            bot.server.send(f'PRIVMSG {channel} :Hi, how are you?\r\n'.encode("ascii"))
+
+    #sends the KICK command to the server  
+    def removeUser(bot,nick,channel):
+        nicks = []
+        if nick in bot.nicks:
+            nicks.remove(nick)
+
+        bot.server.send(f"KICK {nick} from {channel} channel".encode())  
+
+    #sends the join channels
+    def join(bot,nick,channel):
+        try:
+            nicks = []
+            if nick not in bot.nicks:
+                nicks.append(nick)
+            bot.server.send(f"JOIN {channel}\r\n".encode())
+        except:
+            print("Cannot join the channel")
+
+
+    # !slap (slapping a random user in the channel with a trout excluding the bot and the user sending it)
+    def SlapRandom(username):
+        nicks = []
+        # username is the name of the user who sent the message
+
+        # checks the length of the array of nicknames and stores it in x
+        x = len(nicks)
+        y = random.randrange(0, x)
+        if x == 1:
+        # error message
+            print("erorororororo")
+        elif nicks[y] == username:
+            SlapRandom(username)
+        else:
+            data = "SuperBot slaps {} around a bit with a large trout".format(nicks[y])
+            bot.server.send(data.encode())
+
+    # !slap (slap a specific user)
+    def SlapUser(targetname):
+        # targetname is the name of the user to be slapped
+        data = "SuperBot slaps {} around a bit with a large trout".format(targetname)
+        bot.server.send(data.encode())
+
+
+    # !slap (slapping the user sending it if that user is not in the channel)
+    def SlapSender(username):
+        # username is the name of the user who sent the message
+        data = "SuperBot slaps {} around a bit with a large trout".format(username)
+        bot.server.send(data.encode())
+ 
     def launch(bot):
 
         # connects the socket object to the addr address and port
@@ -57,13 +115,13 @@ class botUsers:
             print(f"Received: {message}")
             if message.startswith("PING"):
                 pong_response = "PONG :" + message.split(":")[1] + "\r\n"
-                bot.send(bytes(pong_response, "ascii"))
+                bot.server.send(bytes(pong_response, "ascii"))
 
             if "004" in message:  # 004 is a common numeric for successful registration
                 print(bot.has_created_channel)
                 if not bot.has_created_channel:
                     print("Creating bot channel")
-                    createBotChannel(bot.server, message)
+                    bot.createBotChannel(message)
                     bot.has_created_channel = True
    
     # receive function, which receives messages from other clients and will (eventually) respond to these
@@ -82,7 +140,7 @@ class botUsers:
                         continue
 
                     if message.startswith("PING"):
-                        bot.server.send(f"PONG {message.split(':')[1]}".encode('ascii'))
+                        bot.server.send(f"PONG {message.split(':')[1]}".encode('utf-8'))
 
                     # Check if the message starts with the bot's nickname
                     elif message.startswith(bot.nick):
@@ -91,7 +149,7 @@ class botUsers:
                         print(f"Server: {message}\n")  # Print server messages
 
                 #listens for messages from the client and then does something respectivly
-                listeningFor(bot.server, message)
+                bot.listeningFor(message)
             except Exception as e:
                 print(f"An error occurred: {e}")
                 bot.server.close()
