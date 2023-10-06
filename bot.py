@@ -25,10 +25,8 @@ class botUsers:
 
     def __init__(bot,nick,cap,addr,port):
 
-
         # socket connection, using IPv6
         bot.server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-        
 
         # assigns the correct values to the nickname, addr, and port variables of the object
         bot.nick = nick
@@ -38,7 +36,6 @@ class botUsers:
         bot.port = port
         bot.has_created_channel = False
         
-
 
     def launch(bot):
 
@@ -53,11 +50,6 @@ class botUsers:
         bot.server.sendall(bytes("PASS Test1234\r\n", "ascii"))
         bot.server.sendall(bytes("USER SuperBot SuperBot SuperBot :SuperBot\r\n", "ascii"))
         bot.server.sendall(bytes("NICK SuperBot\r\n", "ascii"))
-        # bot.server.send(bot.cap.encode('ascii') + b"\r\n")
-        # bot.server.send(bot.nick.encode('ascii')+ b"\r\n")
-        # bot.server.send(bot.user.encode('ascii')+ b"\r\n")
-
-        #bot.nick = ''.join(bot.nick.split("NICK")[1].split("USER")[0])
         
         #displays that the bot has connected, and maintains the connecion
         while True:
@@ -73,53 +65,6 @@ class botUsers:
                     print("Creating bot channel")
                     createBotChannel(bot.server, message)
                     bot.has_created_channel = True
-            
-            # elif "some_other_condition" in message:  # Replace with other server messages you want to handle
-            #     # Do something else
-            #     pass
-            
-            # else:
-            #     # Default handling of received messages
-            #     print("Connected. Now logging in")
-            #     bot.server.send(f'{bot.nick}: {message}'.encode('ascii'))
-
-  
-
-    #sends the join channels
-    def join(bot,nick,channel):
-        try:
-            nicks = []
-            if nick not in bot.nicks:
-                nicks.append(nick)
-            bot.server.send(f"JOIN {channel}\r\n".encode())
-        except:
-            print("Cannot join the channel")
-
-     #sends the KICK command to the server  
-    def removeUser(bot,nick,channel):
-        nicks = []
-        if nick in bot.nicks:
-            nicks.remove(nick)
-
-        bot.server.send(f"KICK {nick} from {channel} channel".encode())  
-
-        
-    #COMMANDS THEY ARE INCOMPLETE JUST PROVIDING A TEMPLATE OF HANDLING THEM
-    #used to handle the different commands 
-    def commands(option):
-        if option == "JOIN":
-            channelJoin = ""
-            nick = ""
-            bot.join(nick,channelJoin)
-            print("Joining channels")    #more should be done for it to join channels
-
-        #used to remove nicknames(user) from channels
-        elif option == "KICK":
-            nickname = ""
-            channelname = ""
-            bot.removeUser(nickname,channelname)  
-
-
    
     # receive function, which receives messages from other clients and will (eventually) respond to these
     def receive(bot):
