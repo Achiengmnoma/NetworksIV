@@ -25,6 +25,9 @@ class Server:
         # creates empty arrays to store users and the nicknames of these users as well as connection in a list of dictionaries.
         this.users = []
 
+        # dictionary for channels { "#channel_name": [list_of_users] }
+        this.channels = {}  
+
         # assigns the correct values to the addr and port variables of the object
         this.addr = addr
         this.port = port
@@ -94,11 +97,11 @@ class Server:
                 # Parse the message by spliting and then pulling out the all caps word to run the if statement on.
                 command = words[0].upper()
                 if command == 'PASS':
-                    user_details["password"] = message.split(' ')[1].strip()
+                    user_details["password"] = words[1].strip()
                     print(f"PASS command received. Password set to {user_details['password']}")
 
                 elif command == 'NICK':
-                    user_details["nick"] = message.split(' ')[1].strip()
+                    user_details["nick"] = words[1].strip()
                     print(f"NICK command received. Nick set to {user_details['nick']}")
 
                 elif command == 'USER':
@@ -124,8 +127,22 @@ class Server:
                     print("user joined channel ____")
 
                 elif command == 'JOIN':
-                    #need to create a join command that puts a user in the channel they need be in format JOIN #channel_name
-                    print("user joined channel ____")
+                    channel_name = words[1].strip()
+        
+                    # Create the channel if it does not exist
+                    if channel_name not in this.channels:
+                        this.channels[channel_name] = []
+                    
+                    # Add the user to the channel
+                    this.channels[channel_name].append(user_details)
+
+                    #log to the server what the channel the client is in
+                    print(f"User {user_details['nick']} joined channel {channel_name}")
+
+                    # Broadcast to the other users of that server that the client has JOINed
+                    join_message = f":{user_details['nick']}!{user_details['username']}@{addr} JOIN {channel_name}\r\n"
+                    for channel_user in this.channels[channel_name]:
+                        channel_user['user'].send(join_message.encode('ascii'))
 
                 elif command == 'PART':
                     #need to create a part command that puts a user in the channel they need be in format PART #channel_name
@@ -145,6 +162,11 @@ class Server:
                 
                 elif command == 'TOPIC':
                     #need to create a TOPIC command sets a topic for a channel format: TOPIC #channel_name :new_topic
+                    print("user left channel ____")
+                
+                elif command == 'PONG':
+                    # Need to create a PONG to keep the server in registered status True
+                    # Also need to setup a server send to client PIMGing them
                     print("user left channel ____")
                 
                 # Checks that the user info is enough to be registered to the users list.
