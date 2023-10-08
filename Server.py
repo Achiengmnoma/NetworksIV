@@ -69,9 +69,17 @@ class Server:
     
     def handle_client(this, user, addr, user_queue):
         user_details = {"addr": addr, "user": user, "nick": "", "username": "", "registered": False}
+        buffer = ""
         while True:
-            message = user.recv(1024).decode('ascii')
-            user_queue.put(message)  # Put incoming message in thread-safe queue
+            data = user.recv(1024).decode('ascii')
+            if not data:
+                break
+
+            buffer += data
+
+            while "\r\n" in buffer:
+                line, buffer = buffer.split("\r\n", 1)
+                user_queue.put(line)
 
     def process_client_messages(this, user, addr, user_queue):
         user_details = {"addr": addr, "user": user, "nick": "", "username": "", "registered": False}
@@ -79,9 +87,10 @@ class Server:
             if not user_queue.empty():
                 #uses the queue to get the next message
                 message = user_queue.get()
-
                 words = message.split()
-                print (f"Messages recieve for nic and user: {message}")
+                print (f"Received message: {message}")
+                print(f"Words extracted: {words}")
+
                 # Parse the message by spliting and then pulling out the all caps word to run the if statement on.
                 command = words[0].upper()
                 if command == 'PASS':
@@ -97,17 +106,18 @@ class Server:
                     username = words[1]
                     hostname = words[2]
                     servername = words[3]
-                    realname = data.split(":", 1)[1].strip()
+                    realname = message.split(":", 1)[1].strip()
 
                     # Placing them in the dictionary
                     user_details["username"] = username
                     user_details["hostname"] = hostname
                     user_details["servername"] = servername
                     user_details["realname"] = message.split(":", 1)[1].strip()  # Stripping the leading ':'
+                    
                     print(f"USER command received. Username set to {user_details['username']}")
-                    print(f" Hostname set to {user_details['hostname']}")
-                    print(f" Servername set to {user_details['servername']}")
-                    print(f" Realname set to {user_details['realname']}")
+                    print(f"Hostname set to {user_details['hostname']}")
+                    print(f"Servername set to {user_details['servername']}")
+                    print(f"Realname set to {user_details['realname']}")
 
                 
 
