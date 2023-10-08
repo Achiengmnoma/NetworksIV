@@ -29,8 +29,6 @@ class Server:
         this.addr = addr
         this.port = port
         
-        #This is a que for the messages sent to register the users
-        this.user_queue = queue.Queue() 
         #prevents accessing data at the same time with multi threads by locking it
         this.lock = threading.Lock()  
 
@@ -53,8 +51,11 @@ class Server:
             user, addr = this.server.accept()
             print(f"Accepted connection from {addr}")
 
+            #This is a que for the messages sent to register the users
+            user_queue = queue.Queue()
             # Create a new thread to handle this client and allowing for multiple users connections
-            threading.Thread(target=this.handle_client, args=(user, addr)).start()
+            threading.Thread(target=this.handle_client, args=(user, addr, user_queue)).start()
+            threading.Thread(target=this.process_client_messages, args=(user, addr, user_queue)).start()
 
     # send function, which is used to send messages to the clients
     def Send(this, message):
@@ -66,48 +67,60 @@ class Server:
         this.server.recv(1024).decode('ascii')
         print(f'{this.address} TEST')
     
-    def handle_client(this, user, addr):
+    def handle_client(this, user, addr, user_queue):
         user_details = {"addr": addr, "user": user, "nick": "", "username": "", "registered": False}
         while True:
             message = user.recv(1024).decode('ascii')
-            words = message.split()
-            print (f"Messages recieve for nic and user: {message}")
-            # Parse the message by spliting and then pulling out the all caps word to run the if statement on.
-            command = message.split(' ')[0].upper()
-            if command == 'PASS':
-                user_details["password"] = message.split(' ')[1].strip()
-                print(f"PASS command received. Password set to {user_details['password']}")
+            user_queue.put(message)  # Put incoming message in thread-safe queue
 
-            elif command == 'NICK':
-                user_details["nick"] = message.split(' ')[1].strip()
-                print(f"NICK command received. Nick set to {user_details['nick']}")
+    def process_client_messages(this, user, addr, user_queue):
+        user_details = {"addr": addr, "user": user, "nick": "", "username": "", "registered": False}
+        while True:
+            if not user_queue.empty():
+                #uses the queue to get the next message
+                message = user_queue.get()
 
-            elif command == 'USER':
-                # Parsing username, hostname, servername and realname from the words list
-                username = words[1]
-                hostname = words[2]
-                servername = words[3]
-                realname = data.split(":", 1)[1].strip()
+                words = message.split()
+                print (f"Messages recieve for nic and user: {message}")
+                # Parse the message by spliting and then pulling out the all caps word to run the if statement on.
+                command = words[0].upper()
+                if command == 'PASS':
+                    user_details["password"] = message.split(' ')[1].strip()
+                    print(f"PASS command received. Password set to {user_details['password']}")
 
-                # Placing them in the dictionary
-                user_details["username"] = username
-                user_details["hostname"] = hostname
-                user_details["servername"] = servername
-                user_details["realname"] = message.split(":", 1)[1].strip()  # Stripping the leading ':'
-                print(f"USER command received. Username set to {user_details['username']}")
-                print(f" Hostname set to {user_details['hostname']}")
-                print(f" Servername set to {user_details['servername']}")
-                print(f" Realname set to {user_details['realname']}")
+                elif command == 'NICK':
+                    user_details["nick"] = message.split(' ')[1].strip()
+                    print(f"NICK command received. Nick set to {user_details['nick']}")
 
-            
+                elif command == 'USER':
+                    # Parsing username, hostname, servername and realname from the words list
+                    username = words[1]
+                    hostname = words[2]
+                    servername = words[3]
+                    realname = data.split(":", 1)[1].strip()
 
-            if user_details["nick"] and user_details["username"]:
-                # Update registered = True
-                user_details["registered"] = True
-                # Send welcome message etc. as per IRC RFC
-                print("User registered successfully.")
-                # Add user_details dictionary to the users list
-                this.users.append(user_details)
+                    # Placing them in the dictionary
+                    user_details["username"] = username
+                    user_details["hostname"] = hostname
+                    user_details["servername"] = servername
+                    user_details["realname"] = message.split(":", 1)[1].strip()  # Stripping the leading ':'
+                    print(f"USER command received. Username set to {user_details['username']}")
+                    print(f" Hostname set to {user_details['hostname']}")
+                    print(f" Servername set to {user_details['servername']}")
+                    print(f" Realname set to {user_details['realname']}")
+
+                
+
+                if user_details["nick"] and user_details["username"]:
+                    # Update registered = True
+                    user_details["registered"] = True
+                    # Send welcome message etc. as per IRC RFC
+                    print("User registered successfully.")
+                    # Add user_details dictionary to the users list
+                    this.users.append(user_details)
+
+                #tell the que that the current task is done    
+                user_queue.task_done()
 
 # creates the new instance of the server, and launches it
 server = Server(addr, port)
