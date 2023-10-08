@@ -148,6 +148,7 @@ class Server:
                     print("user left channel ____")
                 
                 # Checks that the user info is enough to be registered to the users list.
+                # Has the user_details stored in a local dictionary but not with the full details guaraneteed and should make sure all data is verified before finish.
                 if user_details["nick"] and user_details["username"]:
                     # Update registered = True
                     user_details["registered"] = True
