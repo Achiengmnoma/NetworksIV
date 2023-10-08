@@ -119,8 +119,35 @@ class Server:
                     print(f"Servername set to {user_details['servername']}")
                     print(f"Realname set to {user_details['realname']}")
 
-                
+                elif command == 'CAP':
+                    #need to create a CAP command that sets a clients capablilities format CAP  <Arguments>
+                    print("user joined channel ____")
 
+                elif command == 'JOIN':
+                    #need to create a join command that puts a user in the channel they need be in format JOIN #channel_name
+                    print("user joined channel ____")
+
+                elif command == 'PART':
+                    #need to create a part command that puts a user in the channel they need be in format PART #channel_name
+                    print("user left channel ____")
+                
+                elif command == 'QUIT':
+                    #need to create a quit command that drops the users connection format QUIT optional_message
+                    print("user left channel ____")
+                
+                elif command == 'LIST':
+                    #need to create a list command that shows all the avalible channels format LIST
+                    print("user left channel ____")
+
+                elif command == 'PRIVMSG':
+                    #need to create a PRIVMSG command that sends a message or pm to another user format: PRIVMSG username :message
+                    print("user left channel ____")
+                
+                elif command == 'TOPIC':
+                    #need to create a TOPIC command sets a topic for a channel format: TOPIC #channel_name :new_topic
+                    print("user left channel ____")
+                
+                # Checks that the user info is enough to be registered to the users list.
                 if user_details["nick"] and user_details["username"]:
                     # Update registered = True
                     user_details["registered"] = True
@@ -129,7 +156,7 @@ class Server:
                     # Add user_details dictionary to the users list
                     this.users.append(user_details)
 
-                #tell the que that the current task is done    
+                # Tell the que that the current task is done    
                 user_queue.task_done()
 
 # creates the new instance of the server, and launches it
