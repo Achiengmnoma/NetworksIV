@@ -7,6 +7,7 @@
 
 import socket
 import threading
+import queue
 
 # set the correct values for the address, and the port
 addr = '::1'
@@ -27,6 +28,11 @@ class Server:
         # assigns the correct values to the addr and port variables of the object
         this.addr = addr
         this.port = port
+        
+        #This is a que for the messages sent to register the users
+        this.user_queue = queue.Queue() 
+        #prevents accessing data at the same time with multi threads by locking it
+        this.lock = threading.Lock()  
 
     def launch(this):
 
@@ -52,8 +58,9 @@ class Server:
 
     # send function, which is used to send messages to the clients
     def Send(this, message):
-        for user in this.users:
-            user.send(message)
+        with this.lock:
+            for user in this.users:
+                user['user'].send(message) # need to have the user sent to this function to have it send data. it would access it through the dictionary
 
     def Receive(this, message):
         this.server.recv(1024).decode('ascii')
@@ -63,20 +70,36 @@ class Server:
         user_details = {"addr": addr, "user": user, "nick": "", "username": "", "registered": False}
         while True:
             message = user.recv(1024).decode('ascii')
-            
+            words = message.split()
+            print (f"Messages recieve for nic and user: {message}")
             # Parse the message by spliting and then pulling out the all caps word to run the if statement on.
             command = message.split(' ')[0].upper()
+            if command == 'PASS':
+                user_details["password"] = message.split(' ')[1].strip()
+                print(f"PASS command received. Password set to {user_details['password']}")
 
-            if command == 'NICK':
+            elif command == 'NICK':
                 user_details["nick"] = message.split(' ')[1].strip()
                 print(f"NICK command received. Nick set to {user_details['nick']}")
 
             elif command == 'USER':
-                # Parsing username, hostname, servername and realname
-                user_details_split = message.split(' ')[1:]
-                user_details["username"] = user_details_split[0]
-                user_details["realname"] = user_details_split[-1][1:]  # Stripping the leading ':'
+                # Parsing username, hostname, servername and realname from the words list
+                username = words[1]
+                hostname = words[2]
+                servername = words[3]
+                realname = data.split(":", 1)[1].strip()
+
+                # Placing them in the dictionary
+                user_details["username"] = username
+                user_details["hostname"] = hostname
+                user_details["servername"] = servername
+                user_details["realname"] = message.split(":", 1)[1].strip()  # Stripping the leading ':'
                 print(f"USER command received. Username set to {user_details['username']}")
+                print(f" Hostname set to {user_details['hostname']}")
+                print(f" Servername set to {user_details['servername']}")
+                print(f" Realname set to {user_details['realname']}")
+
+            
 
             if user_details["nick"] and user_details["username"]:
                 # Update registered = True
