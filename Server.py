@@ -1,5 +1,6 @@
 # Group 7:
 # Adam Smith (2449898)
+# Celeste Artley (2600927)
 # Daniel Niven (2481553)
 # Stacy Onyango (2437819)
 # Ross Mcbride (r.s.z.mcbride)
@@ -44,32 +45,10 @@ class Server:
 
             # accepts the connection, and displays that the connection was succesful
             user, addr = this.server.accept()
-            this.address = str(addr).split("'")[1].split("'")[0] + ":" + str(addr).split(", ")[1].split(",")[0]
-            print("Accepted connection from " + this.address)
+            print(f"Accepted connection from {addr}")
 
-            # receives the nickname of the client, and decodes it
-            cap = user.recv(1024).decode('ascii')
-            fullname = user.recv(1024).decode('ascii')
-            nick = ''.join(fullname.split("NICK")[1].split("USER")[0])
-            this.nicks.append(nick)
-            username = ''.join(fullname.split("USER")[1].split("0")[0])
-            this.users.append(username)
-            realname = fullname.split(":",1)[1]
-
-            #user.send(nick.encode('ascii'))
-            
-
-            # some very brief validation for the username
-            #if nick in this.users:
-                #user.send("Please choose a unique name!")
-            #else:
-                # adds the user and their nickname to the relevant arrays
-                #this.nicks.append(nick)
-                #this.users.append(user)
-            
-            # welcomes the new client to the server, and tells all other clients that a new user has joined
-            print(f'{cap}')
-            print(f'NICK {nick}\r\nUSER {username} 0 * :{realname}\r\n')
+            # Create a new thread to handle this client
+            threading.Thread(target=this.handle_client, args=(user_socket, addr)).start()
 
     # send function, which is used to send messages to the clients
     def Send(this, message):
@@ -79,6 +58,32 @@ class Server:
     def Receive(this, message):
         this.server.recv(1024).decode('ascii')
         print(f'{this.address} TEST')
+    
+    def handle_client(this, user, addr):
+        registered = False
+        while True:
+            message = user.recv(1024).decode('ascii')
+            
+            # Parse the message by spliting and then pulling out the all caps word to run the if statement on.
+            command = message.split(' ')[0].upper()
+
+            if command == 'NICK':
+                nick = message.split(' ')[1].strip()
+                # Add your code to register the nickname, validate etc.
+                this.nicks.append(nick)
+
+            elif command == 'USER':
+                # Parsing username, hostname, servername and realname
+                user_details = message.split(' ')[1:]
+                username = user_details[0]
+                realname = user_details[-1][1:]  # The realname starts with a ':' so use the -1
+                # Add your code to register the user
+                this.users.append(username)
+
+            if nick and username:
+                registered = True
+                # Send welcome message etc. as per IRC RFC
+                # Update registered = True
 
 # creates the new instance of the server, and launches it
 server = Server(addr, port)

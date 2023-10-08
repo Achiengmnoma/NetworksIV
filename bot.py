@@ -1,8 +1,10 @@
 # Group 7:
 # Adam Smith (2449898)
+# Celeste Artley (2600927)
 # Daniel Niven (2481553)
 # Stacy Onyango (2437819)
 # Ross Mcbride (r.s.z.mcbride)
+
 
 import socket
 import random
