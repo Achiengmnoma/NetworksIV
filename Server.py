@@ -6,6 +6,7 @@
 # Ross Mcbride (r.s.z.mcbride)
 
 import socket
+import threading
 
 # set the correct values for the address, and the port
 addr = '::1'
@@ -20,9 +21,8 @@ class Server:
         # socket connection, using IPv6
         this.server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
 
-        # creates empty arrays to store users and the nicknames of these users
+        # creates empty arrays to store users and the nicknames of these users as well as connection in a list of dictionaries.
         this.users = []
-        this.nicks = []
 
         # assigns the correct values to the addr and port variables of the object
         this.addr = addr
@@ -47,8 +47,8 @@ class Server:
             user, addr = this.server.accept()
             print(f"Accepted connection from {addr}")
 
-            # Create a new thread to handle this client
-            threading.Thread(target=this.handle_client, args=(user_socket, addr)).start()
+            # Create a new thread to handle this client and allowing for multiple users connections
+            threading.Thread(target=this.handle_client, args=(user, addr)).start()
 
     # send function, which is used to send messages to the clients
     def Send(this, message):
@@ -60,7 +60,7 @@ class Server:
         print(f'{this.address} TEST')
     
     def handle_client(this, user, addr):
-        registered = False
+        user_details = {"addr": addr, "user": user, "nick": "", "username": "", "registered": False}
         while True:
             message = user.recv(1024).decode('ascii')
             
@@ -68,22 +68,23 @@ class Server:
             command = message.split(' ')[0].upper()
 
             if command == 'NICK':
-                nick = message.split(' ')[1].strip()
-                # Add your code to register the nickname, validate etc.
-                this.nicks.append(nick)
+                user_details["nick"] = message.split(' ')[1].strip()
+                print(f"NICK command received. Nick set to {user_details['nick']}")
 
             elif command == 'USER':
                 # Parsing username, hostname, servername and realname
-                user_details = message.split(' ')[1:]
-                username = user_details[0]
-                realname = user_details[-1][1:]  # The realname starts with a ':' so use the -1
-                # Add your code to register the user
-                this.users.append(username)
+                user_details_split = message.split(' ')[1:]
+                user_details["username"] = user_details_split[0]
+                user_details["realname"] = user_details_split[-1][1:]  # Stripping the leading ':'
+                print(f"USER command received. Username set to {user_details['username']}")
 
-            if nick and username:
-                registered = True
-                # Send welcome message etc. as per IRC RFC
+            if user_details["nick"] and user_details["username"]:
                 # Update registered = True
+                user_details["registered"] = True
+                # Send welcome message etc. as per IRC RFC
+                print("User registered successfully.")
+                # Add user_details dictionary to the users list
+                this.users.append(user_details)
 
 # creates the new instance of the server, and launches it
 server = Server(addr, port)
