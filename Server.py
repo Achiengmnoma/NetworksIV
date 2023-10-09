@@ -156,7 +156,10 @@ class Server:
                     for channel_user in this.channels[channel_name]:
                         channel_user['user'].send(f":{user_details['nick']}!{user_details['username']}@{addr[0]} JOIN {channel_name}\r\n".encode('ascii'))
 
-                        #this needs to change when we create the topic for channels
+                        # Trying to implement the topic lookup if statement but the Data Structure does not work for this
+                        # if this.channels[channel_name].get("topic", None):
+                        #     channel_user['user'].send(f":{user_details['hostname']} 331 {user_details['nick']} {channel_name} :{this.channels[channel_name]['topic']}\r\n".encode('ascii'))
+                        # else:
                         channel_user['user'].send(f":{user_details['hostname']} 331 {user_details['nick']} {channel_name} :No Topic is set\r\n".encode('ascii'))
                         #This is where you send the name list info
                         channel_user['user'].send(f":{user_details['hostname']} 353 {user_details['nick']} = {channel_name} :{names_list}\r\n".encode('ascii'))
@@ -201,8 +204,7 @@ class Server:
                     print(f"{addr_header_send} Message sent to {target}")
                 
                 elif command == 'TOPIC':
-                    #need to create a TOPIC command sets a topic for a channel format: TOPIC #channel_name :new_topic
-                    print(f"{addr_header_send} user left channel ____")
+                    
                 
                 elif command == 'PONG':
                     # Need to create a PONG to keep the server in registered status True
@@ -241,6 +243,9 @@ class Server:
 
                 # Tell the que that the current task is done    
                 user_queue.task_done()
+
+    def handle_topic(self, command, user_details, addr):
+        
 
 # creates the new instance of the server, and launches it
 server = Server(addr, port)
