@@ -230,7 +230,7 @@ class Server:
                 elif command == 'PONG':
                     # Need to create a PONG to keep the server in registered status True
                     # Also need to setup a server send to client PIMGing them
-                    print(f"{addr_header_send} user left channel ____")
+                    print(f"{addr_header_send} user replyed to PING")
                 
                 # Checks that the user info is enough to be registered to the users list.
                 # Has the user_details stored in a local dictionary but not with the full details guaraneteed and should make sure all data is verified before finish.
