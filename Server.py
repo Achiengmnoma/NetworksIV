@@ -171,8 +171,29 @@ class Server:
                     print(f"{addr_header_send} user left channel ____")
                 
                 elif command == 'QUIT':
-                    #need to create a quit command that drops the users connection format QUIT optional_message
-                    print(f"{addr_header_send} user left channel ____")
+                    # Parse optional quit message then split it from the command word
+                    optional_message = ''
+                    if len(words) > 1:
+                        optional_message = message.split(" ", 1)[1].strip()
+
+                    # Broadcast quit message to all the users channels
+                    for channel_name, channel_users in this.channels.items():
+                        if user_details in channel_users:
+                            for channel_user in channel_users:
+                                channel_user['user'].send(f":{user_details['nick']}!{user_details['username']}@{addr[0]} QUIT :{optional_message}\r\n".encode('ascii'))
+                            # Remove the user from this channel
+                            channel_users.remove(user_details)
+
+                    # Remove user from the users list
+                    this.users.remove(user_details)
+
+                    # Close the socket
+                    user.close()
+
+                    print(f"{addr_header_send} user has quit. Message: {optional_message}")
+
+                    # Break out of the while loop to end this thread for the user
+                    break
                 
                 elif command == 'LIST':
                     #need to create a list command that shows all the avalible channels format LIST
@@ -204,7 +225,7 @@ class Server:
                     print(f"{addr_header_send} Message sent to {target}")
                 
                 elif command == 'TOPIC':
-                    
+                    print(f"User tryed to change the topic")
                 
                 elif command == 'PONG':
                     # Need to create a PONG to keep the server in registered status True
@@ -243,8 +264,6 @@ class Server:
 
                 # Tell the que that the current task is done    
                 user_queue.task_done()
-
-    def handle_topic(self, command, user_details, addr):
         
 
 # creates the new instance of the server, and launches it
