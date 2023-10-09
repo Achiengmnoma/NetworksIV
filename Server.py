@@ -86,23 +86,29 @@ class Server:
 
     def process_client_messages(this, user, addr, user_queue):
         user_details = {"addr": addr, "user": user, "nick": "", "username": "", "registered": False}
+        addr_header_send = f"[{user_details['addr'][0]}:{user_details['addr'][1]}] <- b'"
+        addr_header_recieve = f"[{user_details['addr'][0]}:{user_details['addr'][1]}] -> b'"
         while True:
             if not user_queue.empty():
                 #uses the queue to get the next message
                 message = user_queue.get()
                 words = message.split()
-                print (f"Received message: {message}")
-                print(f"Words extracted: {words}")
-
+                #recieved message log into the server
+                print (f"{addr_header_recieve} {message}")
+                
                 # Parse the message by spliting and then pulling out the all caps word to run the if statement on.
                 command = words[0].upper()
                 if command == 'PASS':
                     user_details["password"] = words[1].strip()
-                    print(f"PASS command received. Password set to {user_details['password']}")
+
+                    #used for debuging PASS command
+                    # print(f"{addr_header_send} PASS command received. Password set to {user_details['password']}")
 
                 elif command == 'NICK':
                     user_details["nick"] = words[1].strip()
-                    print(f"NICK command received. Nick set to {user_details['nick']}")
+
+                    #used for debuging NICK command
+                    #print(f"{addr_header_send} NICK command received. Nick set to {user_details['nick']}")
 
                 elif command == 'USER':
                     # Parsing username, hostname, servername and realname from the words list
@@ -117,14 +123,17 @@ class Server:
                     user_details["servername"] = servername
                     user_details["realname"] = message.split(":", 1)[1].strip()  # Stripping the leading ':'
                     
-                    print(f"USER command received. Username set to {user_details['username']}")
-                    print(f"Hostname set to {user_details['hostname']}")
-                    print(f"Servername set to {user_details['servername']}")
-                    print(f"Realname set to {user_details['realname']}")
+                    #used for debuging USAER command
+                    #print(f"{addr_header_send} USER command received. Username set to {user_details['username']}")
+                    #print(f"{addr_header_send} Hostname set to {user_details['hostname']}")
+                    #print(f"{addr_header_send} Servername set to {user_details['servername']}")
+                    #print(f"{addr_header_send} Realname set to {user_details['realname']}")
 
                 elif command == 'CAP':
                     #need to create a CAP command that sets a clients capablilities format CAP  <Arguments>
-                    print("user joined channel ____")
+
+                    #used for debuging CAP command
+                    print(f"{addr_header_send} user set the permissions")
 
                 elif command == 'JOIN':
                     channel_name = words[1].strip()
@@ -137,7 +146,7 @@ class Server:
                     this.channels[channel_name].append(user_details)
 
                     #log to the server what the channel the client is in
-                    print(f"User {user_details['nick']} joined channel {channel_name}")
+                    print(f"{addr_header_send} User {user_details['nick']} joined channel {channel_name}")
 
                     # Broadcast to the other users of that server that the client has JOINed
                     join_message = f":{user_details['nick']}!{user_details['username']}@{addr} JOIN {channel_name}\r\n"
@@ -146,28 +155,28 @@ class Server:
 
                 elif command == 'PART':
                     #need to create a part command that puts a user in the channel they need be in format PART #channel_name
-                    print("user left channel ____")
+                    print(f"{addr_header_send} user left channel ____")
                 
                 elif command == 'QUIT':
                     #need to create a quit command that drops the users connection format QUIT optional_message
-                    print("user left channel ____")
+                    print(f"{addr_header_send} user left channel ____")
                 
                 elif command == 'LIST':
                     #need to create a list command that shows all the avalible channels format LIST
-                    print("user left channel ____")
+                    print(f"{addr_header_send} user left channel ____")
 
                 elif command == 'PRIVMSG':
                     #need to create a PRIVMSG command that sends a message or pm to another user format: PRIVMSG username :message
-                    print("user left channel ____")
+                    print(f"{addr_header_send} user left channel ____")
                 
                 elif command == 'TOPIC':
                     #need to create a TOPIC command sets a topic for a channel format: TOPIC #channel_name :new_topic
-                    print("user left channel ____")
+                    print(f"{addr_header_send} user left channel ____")
                 
                 elif command == 'PONG':
                     # Need to create a PONG to keep the server in registered status True
                     # Also need to setup a server send to client PIMGing them
-                    print("user left channel ____")
+                    print(f"{addr_header_send} user left channel ____")
                 
                 # Checks that the user info is enough to be registered to the users list.
                 # Has the user_details stored in a local dictionary but not with the full details guaraneteed and should make sure all data is verified before finish.
@@ -175,9 +184,27 @@ class Server:
                     # Update registered = True
                     user_details["registered"] = True
                     # Send welcome message etc. as per IRC RFC
-                    print("User registered successfully.")
+                    print(f"{addr_header_send}:{user_details['hostname']} 001 {user_details['nick']} :Hi, welcome to IRC.")
+                    user_details['user'].send(f":{user_details['hostname']} 001 {user_details['nick']} :Hi, welcome to IRC.".encode("ascii"))
+
+                    print(f"{addr_header_send}:{user_details['hostname']} 002 {user_details['nick']} :Your host is {user_details['hostname']} running version Group 7 IRC 1.0")
+                    user_details['user'].send(f":{user_details['hostname']} 002 {user_details['nick']} :Your host is {user_details['hostname']} running version Group 7 IRC 1.0".encode("ascii"))
+
+                    print(f"{addr_header_send}:{user_details['hostname']} 003 {user_details['nick']} :This server was created sometime")
+                    user_details['user'].send(f":{user_details['hostname']} 003 {user_details['nick']} :This server was created sometime".encode("ascii"))
+
+                    print(f"{addr_header_send}:{user_details['hostname']} 004 {user_details['nick']} {user_details['hostname']} Group 7 IRC 1.0 :")
+                    user_details['user'].send(f":{user_details['hostname']} 004 {user_details['nick']} {user_details['hostname']} Group 7 IRC 1.0".encode("ascii"))
+
+                    print(f"{addr_header_send}:{user_details['hostname']} 251 {user_details['nick']} :There are ____ users and 0 services on 1 server")
+                    user_details['user'].send(f":{user_details['hostname']} 251 {user_details['nick']} :There are ____ users and 0 services on 1 server".encode("ascii"))
+
+                    print(f"{addr_header_send}:{user_details['hostname']} 422 {user_details['nick']} :MOTD File is missing")
+                    user_details['user'].send(f":{user_details['hostname']} 422 {user_details['nick']} :MOTD File is missing".encode("ascii"))
                     # Add user_details dictionary to the users list
                     this.users.append(user_details)
+
+                    
 
                 # Tell the que that the current task is done    
                 user_queue.task_done()
