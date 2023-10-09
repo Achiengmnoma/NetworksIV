@@ -233,19 +233,8 @@ class Server:
                     print(f"{addr_header_send} user replyed to PING")
                 
                 elif command == "SLAP":
-                    print(f"Slapping random user with a trout!")
-                    ChanU = [u['nick']] for u in this.channels[channel_name] if u['nick'] != user_details['nick'] and u['nick'] != 'SuperBot']
+                    bot.SlapRandom(user_details['nick'], channel_name)
 
-                    if ChanU:
-                        target = random.choice(ChanU)
-
-                    slap_message = f":SuperBot!{user_details['username']}@{addr[0]} PRIVMSG {channel_name} :{user_details['nick']} slaps {target_user} around a bit with a large trout\r\n"
-                        this.Send(slap_message.encode('ascii'))
-                    else:
-                        # If no other users in the channel, send a message indicating that
-                        user.send(":SuperBot!{}@{} PRIVMSG {} :No one else to slap here!\r\n".format(
-                        user_details['username'], addr[0], channel_name).encode('ascii'))
-                    
 
 
                 # Checks that the user info is enough to be registered to the users list.
