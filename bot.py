@@ -68,20 +68,8 @@ class botUsers:
 
 
     # !slap (slapping a random user in the channel with a trout excluding the bot and the user sending it)
-    def SlapRandom(self, sender_nick, channel_name):
-        # Create a list of users in the channel excluding the bot and the user who sent the SLAP command
-        ChanU = [u['nick'] for u in this.channels[channel_name] if u['nick'] != sender_nick and u['nick'] != 'SuperBot']
-
-        if ChanU:
-            target_user = random.choice(ChanU)
-
-            # Construct the slap message
-            slap_message = f":SuperBot!{self.user_details['username']}@{self.addr[0]} PRIVMSG {channel_name} :{sender_nick} slaps {target_user} around a bit with a large trout\r\n"
-            self.server.send(slap_message.encode('ascii'))
-        else:
-            # If no other users in the channel, send a message indicating that
-            user.send(f":SuperBot!{self.user_details['username']}@{self.addr[0]} PRIVMSG {channel_name} :No one else to slap here!\r\n".encode('ascii'))
-
+    def SlapRandom(username):
+            bot.server.send(f'PRIVMSG {channel} :Slapping someone random with a trout!'.encode("ascii"))
 
     # !slap (slap a specific user)
     def SlapUser(targetname):

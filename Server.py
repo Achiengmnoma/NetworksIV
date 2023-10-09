@@ -232,9 +232,18 @@ class Server:
                     # Also need to setup a server send to client PIMGing them
                     print(f"{addr_header_send} user replyed to PING")
                 
-                elif command == "SLAP":
-                    bot.SlapRandom(user_details['nick'], channel_name)
+                elif message.find(f'PRIVMSG {channel} :!slap') != -1:
+                    try:
+                        # split the message to extract username to slap
+                        split_message = message.split(':!slap ')
+                        target_username = split_message[1].strip()
 
+                        # send a PRIVMSG to slap the target user
+                        slap_message = f"PRIVMSG {#Bot_Commands} :SuperBot slaps {target_username} around a bit with a large trout\r\n"
+                        bot.server.send(slap_message.encode("ascii"))
+                    except IndexError:
+                        # If !slap was not followed by a username
+                        bot.server.send(f'PRIVMSG {#Bot_Commands} :Please specify a username to slap.\r\n'.encode("ascii"))
 
 
                 # Checks that the user info is enough to be registered to the users list.
