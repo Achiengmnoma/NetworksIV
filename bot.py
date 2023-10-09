@@ -69,7 +69,20 @@ class botUsers:
 
     # !slap (slapping a random user in the channel with a trout excluding the bot and the user sending it)
     def SlapRandom(username):
-            bot.server.send(f'PRIVMSG {channel} :Slapping someone random with a trout!'.encode("ascii"))
+        nicks = []
+        # username is the name of the user who sent the message
+
+        # checks the length of the array of nicknames and stores it in x
+        x = len(nicks)
+        y = random.randrange(0, x)
+        if x == 1:
+        # error message
+            print("Error do not have a person")
+        elif nicks[y] == username:
+            SlapRandom(username)
+        else:
+            data = "SuperBot slaps {} around a bit with a large trout".format(nicks[y])
+            bot.server.send(data.encode())
 
     # !slap (slap a specific user)
     def SlapUser(targetname):
@@ -134,8 +147,21 @@ class botUsers:
                     # Check if the message starts with the bot's nickname
                     elif message.startswith(bot.nick):
                         print(message)  # Print bot's messages
-                    else:
-                        print(f"Server: {message}\n")  # Print server messages
+                    
+                    elif message.find(f'PRIVMSG {channel} :!slap') != -1:
+                        try:
+                            # split the message to extract username to slap
+                            split_message = message.split(':!slap ')
+                            target_username = split_message[1].strip()
+
+                            # send a PRIVMSG to slap the target user
+                            slap_message = f"PRIVMSG {channel} :SuperBot slaps {target_username} around a bit with a large trout\r\n"
+                            bot.server.send(slap_message.encode("ascii"))
+                        except IndexError:
+                            # If !slap was not followed by a username
+                            bot.server.send(f'PRIVMSG {channel} :Please specify a username to slap.\r\n'.encode("ascii"))
+                        else:
+                            print(f"Server: {message}\n")  # Print server messages
 
                 #listens for messages from the client and then does something respectivly
                 bot.listeningFor(message)

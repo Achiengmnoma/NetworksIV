@@ -213,7 +213,31 @@ class Server:
                                 # however you don't want to send the message twice so you need to exclude yourself as a channel_user from the channels list
                                 if channel_user['addr'] != addr:
                                     channel_user['user'].send(f":{user_details['nick']}!{user_details['username']}@{addr[0]} PRIVMSG {target} :{message_text}\r\n".encode('ascii'))
-                                
+                elif command == 'SLAP':
+                    target = words[1]
+
+                    # If the target is empty, slap a random person
+                    if not target:
+                        if this.channels:
+                            channel_names = list(this.channels.keys())
+                            target_channel = random.choice(channel_names)
+                            if this.channels[target_channel]:
+                                target_user = random.choice(this.channels[target_channel])
+                                this.Send(f":SuperBot!SuperBot@irc.server SLAP {target_user['nick']} :slaps {user_details['nick']} around a bit with a large trout\r\n".encode('ascii'))
+                        else:
+                            print("No channels to slap in.")
+
+                    # If the target is a nickname
+                    else:
+                        # Send the message to the user with the target nickname
+                        for user in this.users:
+                            if user['nick'] == target:
+                                this.Send(f":SuperBot!SuperBot@irc.server SLAP {target} :slaps {user_details['nick']} around a bit with a large trout\r\n".encode('ascii'))
+                                break
+
+                    # Logs the message to the Server in the correct way
+                    print(f"{addr_header_send} Message sent to {target}")
+
                     # If the target is a nickname
                     else:
                         # Send the message to the user with the target nickname
@@ -232,20 +256,6 @@ class Server:
                     # Also need to setup a server send to client PIMGing them
                     print(f"{addr_header_send} user replyed to PING")
                 
-                elif message.find(f'PRIVMSG {channel} :!slap') != -1:
-                    try:
-                        # split the message to extract username to slap
-                        split_message = message.split(':!slap ')
-                        target_username = split_message[1].strip()
-
-                        # send a PRIVMSG to slap the target user
-                        slap_message = f"PRIVMSG {#Bot_Commands} :SuperBot slaps {target_username} around a bit with a large trout\r\n"
-                        bot.server.send(slap_message.encode("ascii"))
-                    except IndexError:
-                        # If !slap was not followed by a username
-                        bot.server.send(f'PRIVMSG {#Bot_Commands} :Please specify a username to slap.\r\n'.encode("ascii"))
-
-
                 # Checks that the user info is enough to be registered to the users list.
                 # Has the user_details stored in a local dictionary but not with the full details guaraneteed and should make sure all data is verified before finish.
                 if user_details["nick"] and user_details["username"] and not user_details["registered"]:
