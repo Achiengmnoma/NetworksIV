@@ -148,10 +148,19 @@ class Server:
                     #log to the server what the channel the client is in
                     print(f"{addr_header_send} User {user_details['nick']} joined channel {channel_name}")
 
+                    #Building the names list for the 353 command to be sent to each user
+                    names_list = " ".join([u['nick'] for u in this.channels[channel_name]])
+
                     # Broadcast to the other users of that server that the client has JOINed
-                    join_message = f":{user_details['nick']}!{user_details['username']}@{addr} JOIN {channel_name}\r\n"
                     for channel_user in this.channels[channel_name]:
-                        channel_user['user'].send(join_message.encode('ascii'))
+                        channel_user['user'].send(f":{user_details['nick']}!{user_details['username']}@{addr[0]} JOIN {channel_name}\r\n".encode('ascii'))
+
+                        #this needs to change when we create the topic for channels
+                        channel_user['user'].send(f":{user_details['hostname']} 331 {user_details['nick']} {channel_name} :No Topic is set\r\n".encode('ascii'))
+                        #This is where you send the name list info
+                        channel_user['user'].send(f":{user_details['hostname']} 353 {user_details['nick']} = {channel_name} :{names_list}\r\n".encode('ascii'))
+                        #This is where you tell the client that you are at the end of the names list
+                        channel_user['user'].send(f":{user_details['hostname']} 366 {user_details['nick']} {channel_name} :End of names list\r\n".encode('ascii'))
 
                 elif command == 'PART':
                     #need to create a part command that puts a user in the channel they need be in format PART #channel_name
@@ -180,27 +189,27 @@ class Server:
                 
                 # Checks that the user info is enough to be registered to the users list.
                 # Has the user_details stored in a local dictionary but not with the full details guaraneteed and should make sure all data is verified before finish.
-                if user_details["nick"] and user_details["username"]:
+                if user_details["nick"] and user_details["username"] and not user_details["registered"]:
                     # Update registered = True
                     user_details["registered"] = True
                     # Send welcome message etc. as per IRC RFC
                     print(f"{addr_header_send}:{user_details['hostname']} 001 {user_details['nick']} :Hi, welcome to IRC.")
-                    user_details['user'].send(f":{user_details['hostname']} 001 {user_details['nick']} :Hi, welcome to IRC.".encode("ascii"))
+                    user_details['user'].send(f":{user_details['hostname']} 001 {user_details['nick']} :Hi, welcome to IRC.\r\n".encode("ascii"))
 
                     print(f"{addr_header_send}:{user_details['hostname']} 002 {user_details['nick']} :Your host is {user_details['hostname']} running version Group 7 IRC 1.0")
-                    user_details['user'].send(f":{user_details['hostname']} 002 {user_details['nick']} :Your host is {user_details['hostname']} running version Group 7 IRC 1.0".encode("ascii"))
+                    user_details['user'].send(f":{user_details['hostname']} 002 {user_details['nick']} :Your host is {user_details['hostname']} running version Group 7 IRC 1.0\r\n".encode("ascii"))
 
                     print(f"{addr_header_send}:{user_details['hostname']} 003 {user_details['nick']} :This server was created sometime")
-                    user_details['user'].send(f":{user_details['hostname']} 003 {user_details['nick']} :This server was created sometime".encode("ascii"))
+                    user_details['user'].send(f":{user_details['hostname']} 003 {user_details['nick']} :This server was created sometime\r\n".encode("ascii"))
 
                     print(f"{addr_header_send}:{user_details['hostname']} 004 {user_details['nick']} {user_details['hostname']} Group 7 IRC 1.0 :")
-                    user_details['user'].send(f":{user_details['hostname']} 004 {user_details['nick']} {user_details['hostname']} Group 7 IRC 1.0".encode("ascii"))
+                    user_details['user'].send(f":{user_details['hostname']} 004 {user_details['nick']} {user_details['hostname']} Group 7 IRC 1.0\r\n".encode("ascii"))
 
                     print(f"{addr_header_send}:{user_details['hostname']} 251 {user_details['nick']} :There are ____ users and 0 services on 1 server")
-                    user_details['user'].send(f":{user_details['hostname']} 251 {user_details['nick']} :There are ____ users and 0 services on 1 server".encode("ascii"))
+                    user_details['user'].send(f":{user_details['hostname']} 251 {user_details['nick']} :There are ____ users and 0 services on 1 server\r\n".encode("ascii"))
 
                     print(f"{addr_header_send}:{user_details['hostname']} 422 {user_details['nick']} :MOTD File is missing")
-                    user_details['user'].send(f":{user_details['hostname']} 422 {user_details['nick']} :MOTD File is missing".encode("ascii"))
+                    user_details['user'].send(f":{user_details['hostname']} 422 {user_details['nick']} :MOTD File is missing\r\n".encode("ascii"))
                     # Add user_details dictionary to the users list
                     this.users.append(user_details)
 
