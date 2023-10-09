@@ -77,7 +77,7 @@ class botUsers:
         y = random.randrange(0, x)
         if x == 1:
         # error message
-            print("erorororororo")
+            print("Error do not have a person")
         elif nicks[y] == username:
             SlapRandom(username)
         else:
