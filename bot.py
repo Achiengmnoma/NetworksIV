@@ -1,8 +1,10 @@
 # Group 7:
 # Adam Smith (2449898)
+# Celeste Artley (2600927)
 # Daniel Niven (2481553)
 # Stacy Onyango (2437819)
 # Ross Mcbride (r.s.z.mcbride)
+
 
 import socket
 import random
@@ -75,7 +77,7 @@ class botUsers:
         y = random.randrange(0, x)
         if x == 1:
         # error message
-            print("erorororororo")
+            print("Error do not have a person")
         elif nicks[y] == username:
             SlapRandom(username)
         else:
@@ -106,7 +108,7 @@ class botUsers:
 
         # sends the PASS USER and NICK and welcome message to the server
         bot.server.send(bytes("PASS Test1234\r\n", "ascii"))
-        bot.server.send(bytes("USER SuperBot SuperBot SuperBot :SuperBot\r\n", "ascii"))
+        bot.server.send(bytes("USER SuperBot ThisPC ThisServer :SuperBot\r\n", "ascii"))
         bot.server.send(bytes("NICK SuperBot\r\n", "ascii"))
         
         #displays that the bot has connected, and maintains the connecion
@@ -140,7 +142,7 @@ class botUsers:
                         continue
 
                     if message.startswith("PING"):
-                        bot.server.send(f"PONG {message.split(':')[1]}".encode('utf-8'))
+                        bot.server.send(f"PONG {message.split(':')[1]}".encode('ascii'))
 
                     # Check if the message starts with the bot's nickname
                     elif message.startswith(bot.nick):
