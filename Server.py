@@ -152,6 +152,7 @@ class Server:
                     names_list = " ".join([u['nick'] for u in this.channels[channel_name]])
 
                     # Broadcast to the other users of that server that the client has JOINed
+                    # This happens regularly and needs to be able to be sent more often using the LIST command I think
                     for channel_user in this.channels[channel_name]:
                         channel_user['user'].send(f":{user_details['nick']}!{user_details['username']}@{addr[0]} JOIN {channel_name}\r\n".encode('ascii'))
 
@@ -175,8 +176,29 @@ class Server:
                     print(f"{addr_header_send} user left channel ____")
 
                 elif command == 'PRIVMSG':
-                    #need to create a PRIVMSG command that sends a message or pm to another user format: PRIVMSG username :message
-                    print(f"{addr_header_send} user left channel ____")
+                    # Takes the target, which could be a  channel or a nickname to be used to send to the right client
+                    target = words[1]  
+                    #Gets the message from the split using the : and then strips the info after it
+                    message_text = message.split(":", 1)[1].strip()  
+
+                    # Check to see if it's a channel
+                    if target.startswith("#"):
+                        if target in this.channels:  # Make sure channel exists
+                            # Send the message to all users in the channel
+                            for channel_user in this.channels[target]:
+                                # however you don't want to send the message twice so you need to exclude yourself as a channel_user from the channels list
+                                if channel_user['addr'] != addr:
+                                    channel_user['user'].send(f":{user_details['nick']}!{user_details['username']}@{addr[0]} PRIVMSG {target} :{message_text}\r\n".encode('ascii'))
+                                
+                    # If the target is a nickname
+                    else:
+                        # Send the message to the user with the target nickname
+                        for user in this.users:
+                            if user['nick'] == target:
+                                user['user'].send(f":{user_details['nick']}!{user_details['username']}@{addr[0]} PRIVMSG {target} :{message_text}\r\n".encode('ascii'))
+                                break 
+                    #Logs the message to the Server in the correct way
+                    print(f"{addr_header_send} Message sent to {target}")
                 
                 elif command == 'TOPIC':
                     #need to create a TOPIC command sets a topic for a channel format: TOPIC #channel_name :new_topic
@@ -192,22 +214,24 @@ class Server:
                 if user_details["nick"] and user_details["username"] and not user_details["registered"]:
                     # Update registered = True
                     user_details["registered"] = True
-                    # Send welcome message etc. as per IRC RFC
+                    # Send welcome message etc. as per IRC 002
                     print(f"{addr_header_send}:{user_details['hostname']} 001 {user_details['nick']} :Hi, welcome to IRC.")
                     user_details['user'].send(f":{user_details['hostname']} 001 {user_details['nick']} :Hi, welcome to IRC.\r\n".encode("ascii"))
-
+                    # Send version number per 002
                     print(f"{addr_header_send}:{user_details['hostname']} 002 {user_details['nick']} :Your host is {user_details['hostname']} running version Group 7 IRC 1.0")
                     user_details['user'].send(f":{user_details['hostname']} 002 {user_details['nick']} :Your host is {user_details['hostname']} running version Group 7 IRC 1.0\r\n".encode("ascii"))
-
+                    # Send Server created time per 003
                     print(f"{addr_header_send}:{user_details['hostname']} 003 {user_details['nick']} :This server was created sometime")
                     user_details['user'].send(f":{user_details['hostname']} 003 {user_details['nick']} :This server was created sometime\r\n".encode("ascii"))
-
+                    # Send connection successfull 004
                     print(f"{addr_header_send}:{user_details['hostname']} 004 {user_details['nick']} {user_details['hostname']} Group 7 IRC 1.0 :")
                     user_details['user'].send(f":{user_details['hostname']} 004 {user_details['nick']} {user_details['hostname']} Group 7 IRC 1.0\r\n".encode("ascii"))
 
+                    #This needs to be updated with the proper number of users.
                     print(f"{addr_header_send}:{user_details['hostname']} 251 {user_details['nick']} :There are ____ users and 0 services on 1 server")
                     user_details['user'].send(f":{user_details['hostname']} 251 {user_details['nick']} :There are ____ users and 0 services on 1 server\r\n".encode("ascii"))
 
+                    #this needs to be updated to not be hardcoded this will be done when you can set the Message of The Day
                     print(f"{addr_header_send}:{user_details['hostname']} 422 {user_details['nick']} :MOTD File is missing")
                     user_details['user'].send(f":{user_details['hostname']} 422 {user_details['nick']} :MOTD File is missing\r\n".encode("ascii"))
                     # Add user_details dictionary to the users list
