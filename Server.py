@@ -5,6 +5,7 @@
 # Stacy Onyango (2437819)
 # Ross Mcbride (r.s.z.mcbride)
 
+from itertools import count
 import socket
 import threading
 import queue
@@ -197,7 +198,24 @@ class Server:
                 
                 elif command == 'LIST':
                     #need to create a list command that shows all the avalible channels format LIST
-                    print(f"{addr_header_send} user left channel ____")
+                    channels = []
+                    num = 0
+
+                    #ERROR TO BE FIXED: does not display the correct number of user's in each channel
+                    for channel_users in this.channels.items():
+                        if user_details not in channel_users:
+                            num+= 1
+
+                    for channel_name in this.channels:
+                        #channels.append(channel_name)
+                        user_details['user'].send(f":{user_details['hostname']} 322 {user_details['nick']} {channel_name} {num} :\r\n".encode('ascii'))
+                        print(f"{addr_header_send}:{user_details['hostname']} 322 {user_details['nick']} {channel_name} {num} :")
+                        #print(f"{addr_header_send} Channel's Listed'")
+                    #print (channels)
+
+                    user_details['user'].send(f"{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n".encode('ascii'))
+                    print(f"{addr_header_send}:{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n")
+                   
 
                 elif command == 'PRIVMSG':
                     # Takes the target, which could be a  channel or a nickname to be used to send to the right client
