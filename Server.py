@@ -203,7 +203,7 @@ class Server:
 
                     #ERROR TO BE FIXED: does not display the correct number of user's in each channel
                     for channel_users in this.channels.items():
-                        if user_details not in channel_users:
+                        if user_details in channel_users:
                             num+= 1
 
                     for channel_name in this.channels:
