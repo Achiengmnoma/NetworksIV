@@ -8,6 +8,7 @@
 
 import socket
 import random
+import re
 
 # set the correct values for the nickname, address, and port
 nick = "SuperBot"
@@ -54,6 +55,12 @@ class botUsers:
 
         if message.find(f'PRIVMSG {channel} :!list') != -1 or message.find(f'PRIVMSG {channel} :!list') > 5:
             bot.server.send(f'LIST\r\n'.encode('ascii'))
+            message = bot.server.recv(1024).decode('ascii')
+            #message2 = bot.server.recv(1024).decode('ascii')
+            parsedmessage = re.findall(r'#\w+', message)
+            #parsedmessage2 = ''.join(message2.split('#')[1].split(":")[0])
+            bot.server.send(f'PRIVMSG {channel} :{parsedmessage}\r\n'.encode("ascii"))
+            #bot.server.send(f'PRIVMSG {channel} :{parsedmessage2}\r\n'.encode("ascii"))
             bot.server.send(f'PRIVMSG {channel} :List of channels displayed!\r\n'.encode("ascii"))
 
     #send random facts to a user
