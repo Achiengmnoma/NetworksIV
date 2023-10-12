@@ -239,7 +239,7 @@ class Server:
                 elif command == 'LIST':
                     # To hold the number of users in each channel
                     num_users_in_channel = 0
-
+                    
                     # Loop through each channel in the 'this.channels' dictionary
                     for channel_name, channel_users in this.channels.items():
                         # Count the number of users in the channel
@@ -252,6 +252,7 @@ class Server:
                     # Send the 'End of LIST' 323 numeric reply to the client
                     user_details['user'].send(f":{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n".encode('ascii'))
                     print(f"{addr_header_send}:{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n")
+
 
                 elif command == 'NAMES':
                     # If there is a channel name
