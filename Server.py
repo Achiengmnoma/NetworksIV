@@ -11,6 +11,7 @@ import threading
 import queue
 import time
 
+parser = argparse.ArgumentParser(description='IRC bot for Networking')
 # set the correct values for the address, and the port
 addr = '::1'
 port = 6667
@@ -345,12 +346,6 @@ class Server:
                     #this needs to be updated to not be hardcoded this will be done when you can set the Message of The Day
                     print(f"{addr_header_send}:{user_details['hostname']} 422 {user_details['nick']} :MOTD File is missing")
                     user_details['user'].send(f":{user_details['hostname']} 422 {user_details['nick']} :MOTD File is missing\r\n".encode("ascii"))
-                    # Add user_details dictionary to the users list
-                    # should be done at the begining but leaving here for debuging.
-                    # this.users.append(user_details)
-
-                    
-
                 # Tell the que that the current task is done    
                 user_queue.task_done()
 # creates the new instance of the server, and launches it

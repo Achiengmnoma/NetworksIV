@@ -11,8 +11,7 @@ import random
 import re
 import argparse
 
-# set the correct values for the nickname, address, and port
-parser = argparse.ArgumentParser(description='Example script with command-line arguments')
+parser = argparse.ArgumentParser(description='IRC bot for Networking')
 parser.add_argument('--host', type=str, help='Specify the host address')
 parser.add_argument('--port', type=int, help='Specify the port number')
 parser.add_argument('--name', type=str, help='Specify the name of the bot')
