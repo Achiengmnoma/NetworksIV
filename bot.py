@@ -46,12 +46,15 @@ class botUsers:
         channel = "#Bot_Commands"
         bot.server.send(bytes(f"JOIN {channel}\r\n", "ascii"))
 
-    def listeningFor(message):
+    def listeningFor(server, message):
         channel = "#Bot_Commands"
         # What commands the bot is listening in for in the #Bot_Commands chat.
         if message.find(f'PRIVMSG {channel} :!hello') != -1 or message.find(f'PRIVMSG {channel} :!hello') > 5:
-            bot.server.send(f'PRIVMSG {channel} :Hi, how are you?\r\n'.encode("ascii"))
-    
+            bot.server.send(f'PRIVMSG {channel} :Hi, how are you?\r\n'.encode("ascii"))  
+
+        if message.find(f'PRIVMSG {channel} :!list') != -1 or message.find(f'PRIVMSG {channel} :!list') > 5:
+            bot.server.send(f'LIST\r\n'.encode('ascii'))
+            bot.server.send(f'PRIVMSG {channel} :List of channels displayed!\r\n'.encode("ascii"))
 
     #send random facts to a user
     def sendFacts(bot,user):
@@ -140,6 +143,9 @@ class botUsers:
                     print("Creating bot channel")
                     bot.createBotChannel(message)
                     bot.has_created_channel = True
+
+            else:
+                bot.listeningFor(message)
    
     # receive function, which receives messages from other clients and will (eventually) respond to these
     def receive(bot):
