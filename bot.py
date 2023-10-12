@@ -84,19 +84,28 @@ class botUsers:
             print("Cannot join the channel")
 
 
-     # !slap (slapping a random user in the channel with a trout excluding the bot and the user sending it)
-    def SlapRandom(bot):
-        channel = "#Bot_Commands"
-        # Get the list of users in the channel
-        channel_users = bot.channels.get(channel, [])
-
-        if channel_users:
-            # Get a random user from the channel, excluding the bot
-            random_user = random.choice([user['nick'] for user in channel_users if user['nick'] != bot.nick])
-
-            # Send a message about the slap
-            slap_message = f'SuperBot slaps {random_user} around a bit with a large trout'
-            bot.server.send(f'PRIVMSG {channel} :{slap_message}\r\n'.encode("ascii"))
+    # !slap (slapping a random user in the channel with a trout excluding the bot and the user sending it)
+    def SlapRandom(bot,username,nick):
+        # nicks = []
+        x = len(nick)
+        # username is the name of the user who sent the message
+        if x == 0:
+        # checks the length of the array of nicknames and stores it in x
+        # x = len(nicks)
+        # y = random.randrange(0, x)
+        # if x == 1:
+            print("Error do not have a person")
+        # error message
+        else:
+            y = random.randrange(0,x)
+            if nick[y] == username:
+                print("Cannot slap user(self)")
+            else:
+                data = "SuperBot slaps {} around a bit with a large trout".format(nick[y])
+                bot.server.send(data.encode())
+        # elif nicks[y] == username:
+        #     SlapRandom(bot,username) the recursive function was giving not defined
+        
 
     # !slap (slap a specific user)
     def SlapUser(targetname):

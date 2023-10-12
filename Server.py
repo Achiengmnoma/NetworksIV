@@ -235,36 +235,50 @@ class Server:
                     # Break out of the while loop to end this thread for the user
                     break
                 
+                
                 elif command == 'LIST':
-                    # need to create a list command that shows all the available channels format LIST
-                    num = 0
+                    # To hold the number of users in each channel
+                    num_users_in_channel = 0
 
-                    #ERROR TO BE FIXED: does not display the correct number of user's in each channel
-                    #for channel_users in this.channels.items():
-                        #if user_details not in channel_users:
-                            #num+= 1
+                    # Loop through each channel in the 'this.channels' dictionary
+                    for channel_name, channel_users in this.channels.items():
+                        # Count the number of users in the channel
+                        num_users_in_channel = len(channel_users)
+                        
+                        # Send the 322 numeric reply back to the client for each channel
+                        user_details['user'].send(f":{user_details['hostname']} 322 {user_details['nick']} {channel_name} {num_users_in_channel} :\r\n".encode('ascii'))
+                        print(f"{addr_header_send}:{user_details['hostname']} 322 {user_details['nick']} {channel_name} {num_users_in_channel} :")
 
-                    print(f'{this.channels}')
+                    # Send the 'End of LIST' 323 numeric reply to the client
+                    user_details['user'].send(f":{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n".encode('ascii'))
+                    print(f"{addr_header_send}:{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n")
 
-                    for channel_name in this.channels:
-                        for indiv_user in this.channels[channel_name]:
-                            num += 1
-                            print(indiv_user)
-                            print(num)
-                            print(num)
-                        user_details['user'].send(f":{user_details['hostname']} 322 {user_details['nick']} {channel_name} {num} :\r\n".encode('ascii'))
-                        print(f"{addr_header_send}:{user_details['hostname']} 322 {user_details['nick']} {channel_name} {num} :")
-                        num = 0
-                        #channels.append(channel_name)
-                        #user_details['user'].send(f":{user_details['hostname']} 322 {user_details['nick']} {channel_name} {num} :\r\n".encode('ascii'))
-                        #print(f"{addr_header_send}:{user_details['hostname']} 322 {user_details['nick']} {channel_name} {num} :")
-                        #num = 0
-                        #print(f"{addr_header_send} Channel's Listed'")
-                    #print (channels)
-
-                    user_details['user'].send(f"{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n".encode('ascii'))
-                    print(f"{addr_header_send}:{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n") 
-
+                elif command == 'NAMES':
+                    # If there is a channel name
+                    if len(words) > 1:
+                        channel_name = words[1].strip()
+                        
+                        # check to see if it exist
+                        if channel_name in this.channels:
+                            # find the names
+                            names_list = " ".join([u['nick'] for u in this.channels[channel_name]])
+                            
+                            # Send the 353 send the info to the client
+                            user_details['user'].send(f":{user_details['hostname']} 353 {user_details['nick']} = {channel_name} :{names_list}\r\n".encode('ascii'))
+                            
+                            # Send the 366 send end of names to the client
+                            user_details['user'].send(f":{user_details['hostname']} 366 {user_details['nick']} {channel_name} :End of NAMES list\r\n".encode('ascii'))
+                            
+                    else:  # If no channel name is provided, list names for all channels
+                        for channel_name, channel_users in this.channels.items():
+                            # Build the names list
+                            names_list = " ".join([u['nick'] for u in channel_users])
+                            
+                            # Send the 353 numeric reply
+                            user_details['user'].send(f":{user_details['hostname']} 353 {user_details['nick']} = {channel_name} :{names_list}\r\n".encode('ascii'))
+                            
+                            # Send the 366 numeric reply to indicate the end of the list
+                            user_details['user'].send(f":{user_details['hostname']} 366 {user_details['nick']} {channel_name} :End of NAMES list\r\n".encode('ascii'))
                 elif command == 'PRIVMSG':
                     # Takes the target, which could be a  channel or a nickname to be used to send to the right client
                     target = words[1]  
