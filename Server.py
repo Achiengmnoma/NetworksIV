@@ -241,8 +241,34 @@ class Server:
                     #Logs the message to the Server in the correct way
                     print(f"{addr_header_send} Message sent to {target}")
                 
+                elif command == "SLAP":
+                    if len(words) >= 2:  # Ensure that there are at least 2 elements in the words list
+                        # Get a list of users in the channel
+                        channel_name = words[1].strip()  # Assuming the channel name is the argument after SLAP
+                        channel_users = this.channels.get(channel_name, [])
+
+                        # Exclude the user who sent the command from the list of potential targets
+                        potential_targets = [user['nick'] for user in channel_users if user['nick'] != user_details['nick']]
+
+                        if potential_targets:
+                            # Choose a random target from the list
+                            target = random.choice(potential_targets)
+
+                            # Send the slap message to the channel
+                            slap_message = f":{user_details['nick']}!{user_details['username']}@{addr[0]} PRIVMSG {'#Bot_Commands'} :{target}, you've been slapped!\r\n"
+                            this.Send(slap_message.encode('ascii'))
+                    
+                            # Log the action in the server
+                            print(f"{addr_header_send} {user_details['nick']} slapped {target}")
+                        else:
+                            # Inform the user that there's no one to slap
+                            user_details['user'].send(f":{user_details['hostname']} NOTICE {user_details['nick']} :No one to slap in {channel_name}\r\n".encode('ascii'))
+                    else:
+                        # Inform the user that the SLAP command is not properly formatted
+                        user_details['user'].send(f":{user_details['hostname']} NOTICE {user_details['nick']} :SLAP command should be formatted as SLAP #channel\r\n".encode('ascii'))
                 elif command == 'TOPIC':
                     print(f"User tryed to change the topic")
+              
                 
                 elif command == 'PONG':
                     # Need to create a PONG to keep the server in registered status True
