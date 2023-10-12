@@ -141,9 +141,15 @@ class botUsers:
     def SlapRandom(bot, nick_list,sent_user):
         # nicks_list = [] of users in the channel
         # sent_user = the user that called the !slap command
-        random_user = random.choice(nick_list)
-        bot.server.send(f'PRIVMSG #Bot_Commands : SuperBot slaps {random_user} around a bit with a large trout\r\n'.encode("ascii"))
-        
+        random_user = "SuperBot"
+        if len(nick_list) > 2:
+            while random_user == sent_user or random_user == "SuperBot":
+                random_user = random.choice(nick_list)
+            
+            bot.server.send(f'PRIVMSG #Bot_Commands : SuperBot slaps {random_user} around a bit with a large trout\r\n'.encode("ascii"))
+        else:
+            bot.server.send(f'PRIVMSG #Bot_Commands : SuperBot slaps {sent_user} around a bit with a large trout. Next time make sure there is someone else to slap!\r\n'.encode("ascii"))
+            
 
     # !slap (slap a specific user)
     def SlapUser(bot, targetname):
