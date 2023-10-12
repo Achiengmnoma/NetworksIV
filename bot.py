@@ -104,9 +104,19 @@ class botUsers:
                 # Call SlapRandom function to slap a random user
                 bot.SlapRandom(nick_list, sent_user)
 
+        if message.find(f'PRIVMSG SuperBot :') != -1: 
+            colon_pos = message.find(':')
+            exclamation_pos = message.find('!')
+            if colon_pos != -1 and exclamation_pos != -1:
+                sent_user = message[colon_pos+1:exclamation_pos]
+            
+            bot.sendFacts(sent_user)  # Call sendFacts method
     #send random facts to a user
     def sendFacts(bot,user):
-       bot.PRIVMSG(user,random.choice(bot.botTxts))
+        #bot.PRIVMSG(user,random.choice(bot.botTxts))
+        text = random.choice(bot.botTxts)
+        print("sending fact to the user")
+        bot.server.send(f'PRIVMSG {user} : {text}\r\n'.encode("ascii"))
         
     #sends the KICK command to the server  
     def removeUser(bot,nick,channel):
