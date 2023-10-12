@@ -106,6 +106,7 @@ class Server:
             this.users.append(user_details)
 
         buffer = ""
+        #Need an if statement here to check to see if the connection is active before trying to read data from them. populates and exception when discconnecting
         while True:
             data = user.recv(1024).decode('ascii')
             if not data:
@@ -167,12 +168,6 @@ class Server:
                     user_details["hostname"] = hostname
                     user_details["servername"] = servername
                     user_details["realname"] = message.split(":", 1)[1].strip()  # Stripping the leading ':'
-                    
-                    #used for debuging USAER command
-                    #print(f"{addr_header_send} USER command received. Username set to {user_details['username']}")
-                    #print(f"{addr_header_send} Hostname set to {user_details['hostname']}")
-                    #print(f"{addr_header_send} Servername set to {user_details['servername']}")
-                    #print(f"{addr_header_send} Realname set to {user_details['realname']}")
 
                 elif command == 'CAP':
                     #need to create a CAP command that sets a clients capablilities format CAP  <Arguments>
@@ -253,12 +248,10 @@ class Server:
                         #channels.append(channel_name)
                         user_details['user'].send(f":{user_details['hostname']} 322 {user_details['nick']} {channel_name} {num} :\r\n".encode('ascii'))
                         print(f"{addr_header_send}:{user_details['hostname']} 322 {user_details['nick']} {channel_name} {num} :")
-                        #print(f"{addr_header_send} Channel's Listed'")
-                    #print (channels)
 
                     user_details['user'].send(f"{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n".encode('ascii'))
                     print(f"{addr_header_send}:{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n") 
-                     
+
                 elif command == 'PRIVMSG':
                     # Takes the target, which could be a  channel or a nickname to be used to send to the right client
                     target = words[1]  
@@ -292,7 +285,6 @@ class Server:
                     # Also need to setup a server send to client PIMGing them
                     user_details['last_msg_timestamp'] = time.time()
 
-                    #debuging 
                     print(f"Received: {message}")
                     outgoing_message = f"PONG : 0\r\n"
                     print(f"Sending: {outgoing_message}")
@@ -315,10 +307,12 @@ class Server:
                     # Send connection successfull 004
                     print(f"{addr_header_send}:{user_details['hostname']} 004 {user_details['nick']} {user_details['hostname']} Group 7 IRC 1.0 :")
                     user_details['user'].send(f":{user_details['hostname']} 004 {user_details['nick']} {user_details['hostname']} Group 7 IRC 1.0\r\n".encode("ascii"))
-
+                    count = 0
+                    for user_details in this.users:
+                        count += 1
                     #This needs to be updated with the proper number of users.
-                    print(f"{addr_header_send}:{user_details['hostname']} 251 {user_details['nick']} :There are ____ users and 0 services on 1 server")
-                    user_details['user'].send(f":{user_details['hostname']} 251 {user_details['nick']} :There are ____ users and 0 services on 1 server\r\n".encode("ascii"))
+                    print(f"{addr_header_send}:{user_details['hostname']} 251 {user_details['nick']} :There are {count} users and 0 services on 1 server")
+                    user_details['user'].send(f":{user_details['hostname']} 251 {user_details['nick']} :There are {count} users and 0 services on 1 server\r\n".encode("ascii"))
 
                     #this needs to be updated to not be hardcoded this will be done when you can set the Message of The Day
                     print(f"{addr_header_send}:{user_details['hostname']} 422 {user_details['nick']} :MOTD File is missing")
