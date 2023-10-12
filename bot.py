@@ -9,16 +9,23 @@
 import socket
 import random
 import re
+import argparse
 
 # set the correct values for the nickname, address, and port
-nick = "SuperBot"
+parser = argparse.ArgumentParser(description='Example script with command-line arguments')
+parser.add_argument('--host', type=str, help='Specify the host address')
+parser.add_argument('--port', type=int, help='Specify the port number')
+parser.add_argument('--name', type=str, help='Specify the name of the bot')
+parser.add_argument('--channel', type=str, help='Specify the channel for the bot')
+args = parser.parse_args()
+
+nick = args.name if args.name else 'SuperBot'
 user = "ROBOT 0 * :Robot Junior"
 cap = "CAP LS 302"
-addr = "::1"
-port = 6667
+addr = args.host if args.host else '::1'
+port = args.port if args.port else 6667
+channel = args.channel if args.channel else '#Bot_Commands'
 
-# a welcome message, that is displayed to all clients when the bot joins
-bobWMsg = "A welcome message from Bob: Hello everyone, my name is Bot Bob. Please send me messages, and I will reply with utterly random nonsense!"
 #creating a socket object
 server = socket.socket()
 # defines the botUsers class, in which the bot operations are executed
@@ -28,6 +35,7 @@ class botUsers:
 
     def __init__(bot,nick,cap,addr,port):
 
+        
         # socket connection, using IPv6
         bot.server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
 
@@ -37,6 +45,7 @@ class botUsers:
         bot.cap = cap
         bot.addr = addr
         bot.port = port
+        bot.channel = channel
         bot.has_created_channel = False
 
         #opens a file and reads in content,then store it lines of text in a list
@@ -44,12 +53,12 @@ class botUsers:
             bot.botTxts = [line.rstrip('\n') for line in f]
        
     def createBotChannel(server, message):
-        channel = "#Bot_Commands"
-        bot.server.send(bytes(f"JOIN {channel}\r\n", "ascii"))
+        
+        bot.server.send(bytes(f"JOIN {bot.channel}\r\n", "ascii"))
 
-    def listeningFor(server, message):
-        channel = "#Bot_Commands"
-        # What commands the bot is listening in for in the #Bot_Commands chat.
+    def listeningFor(bot, message):
+        channel = f"{bot.channel}"
+        # What commands the bot is listening in for in the default(#Bot_Commands) chat.
         if message.find(f'PRIVMSG {channel} :!hello') != -1 or message.find(f'PRIVMSG {channel} :!hello') > 5:
             bot.server.send(f'PRIVMSG {channel} :Hi, how are you?\r\n'.encode("ascii"))  
 
@@ -104,7 +113,7 @@ class botUsers:
                 # Call SlapRandom function to slap a random user
                 bot.SlapRandom(nick_list, sent_user)
 
-        if message.find(f'PRIVMSG SuperBot :') != -1: 
+        if message.find(f'PRIVMSG {bot.nick} :') != -1: 
             colon_pos = message.find(':')
             exclamation_pos = message.find('!')
             if colon_pos != -1 and exclamation_pos != -1:
@@ -141,26 +150,26 @@ class botUsers:
     def SlapRandom(bot, nick_list,sent_user):
         # nicks_list = [] of users in the channel
         # sent_user = the user that called the !slap command
-        random_user = "SuperBot"
+        random_user = f"{bot.nick}"
         if len(nick_list) > 2:
-            while random_user == sent_user or random_user == "SuperBot":
+            while random_user == sent_user or random_user == f"{bot.nick}":
                 random_user = random.choice(nick_list)
             
-            bot.server.send(f'PRIVMSG #Bot_Commands : SuperBot slaps {random_user} around a bit with a large trout\r\n'.encode("ascii"))
+            bot.server.send(f'PRIVMSG {bot.channel} : {bot.nick} slaps {random_user} around a bit with a large trout\r\n'.encode("ascii"))
         else:
-            bot.server.send(f'PRIVMSG #Bot_Commands : SuperBot slaps {sent_user} around a bit with a large trout. Next time make sure there is someone else to slap!\r\n'.encode("ascii"))
+            bot.server.send(f'PRIVMSG {bot.channel} : {bot.nick} slaps {sent_user} around a bit with a large trout. Next time make sure there is someone else to slap!\r\n'.encode("ascii"))
             
 
     # !slap (slap a specific user)
     def SlapUser(bot, targetname):
         # targetname is the name of the user to be slapped
-        bot.server.send(f'PRIVMSG #Bot_Commands : SuperBot slaps {targetname} around a bit with a large trout\r\n'.encode("ascii"))
+        bot.server.send(f'PRIVMSG {bot.channel} : {bot.nick} slaps {targetname} around a bit with a large trout\r\n'.encode("ascii"))
 
 
     # !slap (slapping the user sending it if that user is not in the channel)
     def SlapSender(username):
         # username is the name of the user who sent the message
-        data = "SuperBot slaps {} around a bit with a large trout".format(username)
+        data = "{bot.nick} slaps {} around a bit with a large trout".format(username)
         bot.server.send(data.encode())
  
     def launch(bot):
@@ -173,9 +182,13 @@ class botUsers:
         print ("Connecting to " + str(bot.addr) + ":" + str(bot.port))
 
         # sends the PASS USER and NICK and welcome message to the server
-        bot.server.send(bytes("PASS Test1234\r\n", "ascii"))
-        bot.server.send(bytes("USER SuperBot ThisPC ThisServer :SuperBot\r\n", "ascii"))
-        bot.server.send(bytes("NICK SuperBot\r\n", "ascii"))
+        # bot.server.send(bytes("PASS Test1234\r\n", "ascii"))
+        # bot.server.send(bytes("USER {bot.nick} ThisPC ThisServer :{bot.nick}\r\n", "ascii"))
+        # bot.server.send(bytes("NICK {bot.nick}\r\n", "ascii"))
+
+        bot.server.send(f"PASS Test1234\r\n".encode("ascii"))
+        bot.server.send(f"USER {bot.nick} ThisPC ThisServer :{bot.nick}\r\n".encode("ascii"))
+        bot.server.send(f"NICK {bot.nick}\r\n".encode("ascii"))
         
         #displays that the bot has connected, and maintains the connecion
         while True:
@@ -186,7 +199,6 @@ class botUsers:
                 bot.server.send(bytes(pong_response, "ascii"))
 
             if "004" in message:  # 004 is a common numeric for successful registration
-                print(bot.has_created_channel)
                 if not bot.has_created_channel:
                     print("Creating bot channel")
                     bot.createBotChannel(message)
