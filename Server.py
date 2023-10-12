@@ -243,14 +243,25 @@ class Server:
                     num = 0
 
                     #ERROR TO BE FIXED: does not display the correct number of user's in each channel
-                    for channel_users in this.channels.items():
-                        if user_details not in channel_users:
-                            num+= 1
+                    #for channel_users in this.channels.items():
+                        #if user_details not in channel_users:
+                            #num+= 1
+
+                    print(f'{this.channels}')
 
                     for channel_name in this.channels:
-                        #channels.append(channel_name)
+                        for indiv_user in this.channels[channel_name]:
+                            num += 1
+                            print(indiv_user)
+                            print(num)
+                            print(num)
                         user_details['user'].send(f":{user_details['hostname']} 322 {user_details['nick']} {channel_name} {num} :\r\n".encode('ascii'))
                         print(f"{addr_header_send}:{user_details['hostname']} 322 {user_details['nick']} {channel_name} {num} :")
+                        num = 0
+                        #channels.append(channel_name)
+                        #user_details['user'].send(f":{user_details['hostname']} 322 {user_details['nick']} {channel_name} {num} :\r\n".encode('ascii'))
+                        #print(f"{addr_header_send}:{user_details['hostname']} 322 {user_details['nick']} {channel_name} {num} :")
+                        #num = 0
                         #print(f"{addr_header_send} Channel's Listed'")
                     #print (channels)
 
