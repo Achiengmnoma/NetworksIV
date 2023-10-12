@@ -5,6 +5,7 @@
 # Stacy Onyango (2437819)
 # Ross Mcbride (r.s.z.mcbride)
 
+from itertools import count
 import socket
 import threading
 import queue
@@ -197,7 +198,24 @@ class Server:
                 
                 elif command == 'LIST':
                     #need to create a list command that shows all the avalible channels format LIST
-                    print(f"{addr_header_send} user left channel ____")
+                    channels = []
+                    num = 0
+
+                    #ERROR TO BE FIXED: does not display the correct number of user's in each channel
+                    for channel_users in this.channels.items():
+                        if user_details not in channel_users:
+                            num+= 1
+
+                    for channel_name in this.channels:
+                        #channels.append(channel_name)
+                        user_details['user'].send(f":{user_details['hostname']} 322 {user_details['nick']} {channel_name} {num} :\r\n".encode('ascii'))
+                        print(f"{addr_header_send}:{user_details['hostname']} 322 {user_details['nick']} {channel_name} {num} :")
+                        #print(f"{addr_header_send} Channel's Listed'")
+                    #print (channels)
+
+                    user_details['user'].send(f"{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n".encode('ascii'))
+                    print(f"{addr_header_send}:{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n")
+                   
 
                 elif command == 'PRIVMSG':
                     # Takes the target, which could be a  channel or a nickname to be used to send to the right client
@@ -213,31 +231,7 @@ class Server:
                                 # however you don't want to send the message twice so you need to exclude yourself as a channel_user from the channels list
                                 if channel_user['addr'] != addr:
                                     channel_user['user'].send(f":{user_details['nick']}!{user_details['username']}@{addr[0]} PRIVMSG {target} :{message_text}\r\n".encode('ascii'))
-                elif command == 'SLAP':
-                    target = words[1]
-
-                    # If the target is empty, slap a random person
-                    if not target:
-                        if this.channels:
-                            channel_names = list(this.channels.keys())
-                            target_channel = random.choice(channel_names)
-                            if this.channels[target_channel]:
-                                target_user = random.choice(this.channels[target_channel])
-                                this.Send(f":SuperBot!SuperBot@irc.server SLAP {target_user['nick']} :slaps {user_details['nick']} around a bit with a large trout\r\n".encode('ascii'))
-                        else:
-                            print("No channels to slap in.")
-
-                    # If the target is a nickname
-                    else:
-                        # Send the message to the user with the target nickname
-                        for user in this.users:
-                            if user['nick'] == target:
-                                this.Send(f":SuperBot!SuperBot@irc.server SLAP {target} :slaps {user_details['nick']} around a bit with a large trout\r\n".encode('ascii'))
-                                break
-
-                    # Logs the message to the Server in the correct way
-                    print(f"{addr_header_send} Message sent to {target}")
-
+                                
                     # If the target is a nickname
                     else:
                         # Send the message to the user with the target nickname
