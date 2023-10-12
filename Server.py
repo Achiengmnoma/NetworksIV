@@ -197,25 +197,24 @@ class Server:
                     break
                 
                 elif command == 'LIST':
-                    #need to create a list command that shows all the avalible channels format LIST
-                    channels = []
+                    # need to create a list command that shows all the available channels format LIST
                     num = 0
 
-                    #ERROR TO BE FIXED: does not display the correct number of user's in each channel
-                    for channel_users in this.channels.items():
-                        if user_details not in channel_users:
-                            num+= 1
+                    for channel_name, channel_users in this.channels.items():
+                        # Reset num for each channel
+                        num = 0
 
-                    for channel_name in this.channels:
-                        #channels.append(channel_name)
+                        # Count users in the current channel
+                        for channel_user in channel_users:
+                            if user_details != channel_user:  # Exclude the current user from the count
+                                num += 1
+
+                        # Send information about the channel to the user
                         user_details['user'].send(f":{user_details['hostname']} 322 {user_details['nick']} {channel_name} {num} :\r\n".encode('ascii'))
                         print(f"{addr_header_send}:{user_details['hostname']} 322 {user_details['nick']} {channel_name} {num} :")
-                        #print(f"{addr_header_send} Channel's Listed'")
-                    #print (channels)
 
                     user_details['user'].send(f"{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n".encode('ascii'))
                     print(f"{addr_header_send}:{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n")
-                   
 
                 elif command == 'PRIVMSG':
                     # Takes the target, which could be a  channel or a nickname to be used to send to the right client

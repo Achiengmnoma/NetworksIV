@@ -37,28 +37,25 @@ class botUsers:
         bot.addr = addr
         bot.port = port
         bot.has_created_channel = False
-
-        #opens a file and reads in content,then store it lines of text in a list
-        with open('bot.txt', encoding='utf8') as f:
-            bot.botTxts = [line.rstrip('\n') for line in f]
        
     def createBotChannel(server, message):
         channel = "#Bot_Commands"
         bot.server.send(bytes(f"JOIN {channel}\r\n", "ascii"))
 
-    def listeningFor(server,message):
+    def listeningFor(server, message):
         channel = "#Bot_Commands"
         # What commands the bot is listening in for in the #Bot_Commands chat.
         if message.find(f'PRIVMSG {channel} :!hello') != -1 or message.find(f'PRIVMSG {channel} :!hello') > 5:
-            bot.server.send(f'PRIVMSG {channel} :Hi, how are you?\r\n'.encode("ascii"))
-        elif message.find(f'PRIVMSG {channel} :!slap') != -1 or message.find(f'PRIVMSG {channel} :!slap') > 4:
-            bot.server.send(f'PRIVMSG {channel} :Slapping random user!\r\n'.encode("ascii"))
-    
+            bot.server.send(f'PRIVMSG {channel} :Hi, how are you?\r\n'.encode("ascii"))  
 
-    #send random facts to a user
-    def sendFacts(bot,user):
-       bot.PRIVMSG(user,random.choice(bot.botTxts))
-        
+        elif message.find(f'PRIVMSG {channel} :!list') != -1 or message.find(f'PRIVMSG {channel} :!list') > 5:
+            bot.server.send(f'LIST\r\n'.encode('ascii'))
+            bot.server.send(f'PRIVMSG {channel} :List of channels displayed!\r\n'.encode("ascii"))
+
+        elif message.find(f'PRIVMSG {channel} :!slap') != -1 or message.find(f'PRIVMSG {channel} :!slap') > 5:
+            bot.server.send(f'SLAP\r\n'.encode('ascii'))
+            bot.server.send(f'PRIVMSG {channel} :Slapping random user!\r\n'.encode("ascii"))
+
     #sends the KICK command to the server  
     def removeUser(bot,nick,channel):
         nicks = []
@@ -79,27 +76,21 @@ class botUsers:
 
 
     # !slap (slapping a random user in the channel with a trout excluding the bot and the user sending it)
-    def SlapRandom(bot,username,nick):
-        # nicks = []
-        x = len(nick)
+    def SlapRandom(username):
+        nicks = []
         # username is the name of the user who sent the message
-        if x == 0:
+
         # checks the length of the array of nicknames and stores it in x
-        # x = len(nicks)
-        # y = random.randrange(0, x)
-        # if x == 1:
-            print("Error do not have a person")
+        x = len(nicks)
+        y = random.randrange(0, x)
+        if x == 1:
         # error message
+            print("Error do not have a person")
+        elif nicks[y] == username:
+            SlapRandom(username)
         else:
-            y = random.randrange(0,x)
-            if nick[y] == username:
-                print("Cannot slap user(self)")
-            else:
-                data = "SuperBot slaps {} around a bit with a large trout".format(nick[y])
-                bot.server.send(data.encode())
-        # elif nicks[y] == username:
-        #     SlapRandom(bot,username) the recursive function was giving not defined
-        
+            data = "SuperBot slaps {} around a bit with a large trout".format(nicks[y])
+            bot.server.send(data.encode())
 
     # !slap (slap a specific user)
     def SlapUser(targetname):
@@ -142,6 +133,7 @@ class botUsers:
                     print("Creating bot channel")
                     bot.createBotChannel(message)
                     bot.has_created_channel = True
+
             else:
                 bot.listeningFor(message)
    
