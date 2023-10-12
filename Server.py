@@ -5,7 +5,6 @@
 # Stacy Onyango (2437819)
 # Ross Mcbride (r.s.z.mcbride)
 
-from itertools import count
 import socket
 import threading
 import random
@@ -172,6 +171,25 @@ class Server:
                     #need to create a part command that puts a user in the channel they need be in format PART #channel_name
                     print(f"{addr_header_send} user left channel ____")
                 
+                elif command == 'SLAP':
+                    # Ensure that the SLAP command is properly formatted
+                    if len(words) >= 1:
+                        # Choose a random user from the list of users (excluding the bot itself)
+                        users_to_slap = [user['nick'] for user in this.users if user['nick'] != user_details['nick']]
+        
+                        if users_to_slap:
+                            target = random.choice(users_to_slap)
+
+                        # Send the slap message to the channel
+                        slap_message = f":{user_details['nick']}!{user_details['username']}@{addr[0]} PRIVMSG {'#Bot_Commands'} :{target}, you've been slapped!\r\n"
+                        this.Send(slap_message.encode('ascii'))
+
+                        # Log the action in the server
+                        print(f"{addr_header_send} {user_details['nick']} slapped {target}")
+                    else:
+                        # Inform the user that there's no one to slap
+                        user_details['user'].send(f":{user_details['hostname']} NOTICE {user_details['nick']} :No one to slap\r\n".encode('ascii'))
+                
                 elif command == 'QUIT':
                     # Parse optional quit message then split it from the command word
                     optional_message = ''
@@ -198,24 +216,8 @@ class Server:
                     break
                 
                 elif command == 'LIST':
-                    # need to create a list command that shows all the available channels format LIST
-                    num = 0
-
-                    for channel_name, channel_users in this.channels.items():
-                        # Reset num for each channel
-                        num = 0
-
-                        # Count users in the current channel
-                        for channel_user in channel_users:
-                            if user_details != channel_user:  # Exclude the current user from the count
-                                num += 1
-
-                        # Send information about the channel to the user
-                        user_details['user'].send(f":{user_details['hostname']} 322 {user_details['nick']} {channel_name} {num} :\r\n".encode('ascii'))
-                        print(f"{addr_header_send}:{user_details['hostname']} 322 {user_details['nick']} {channel_name} {num} :")
-
-                    user_details['user'].send(f"{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n".encode('ascii'))
-                    print(f"{addr_header_send}:{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n")
+                    #need to create a list command that shows all the avalible channels format LIST
+                    print(f"{addr_header_send} user left channel ____")
 
                 elif command == 'PRIVMSG':
                     # Takes the target, which could be a  channel or a nickname to be used to send to the right client
@@ -242,27 +244,8 @@ class Server:
                     #Logs the message to the Server in the correct way
                     print(f"{addr_header_send} Message sent to {target}")
                 
-                elif command == "SLAP":
-                    # Ensure that the SLAP command is properly formatted
-                    if len(words) >= 1:
-                        # Choose a random user from the list of users (excluding the bot itself)
-                        users_to_slap = [user['nick'] for user in this.users if user['nick'] != user_details['nick']]
-        
-                        if users_to_slap:
-                            target = random.choice(users_to_slap)
-
-                            # Send the slap message to the channel
-                            slap_message = f":{user_details['nick']}!{user_details['username']}@{addr[0]} PRIVMSG {'#Bot_Commands'} :{target}, you've been slapped!\r\n"
-                            this.Send(slap_message.encode('ascii'))
-
-                            # Log the action in the server
-                            print(f"{addr_header_send} {user_details['nick']} slapped {target}")
-                        else:
-                            # Inform the user that there's no one to slap
-                            user_details['user'].send(f":{user_details['hostname']} NOTICE {user_details['nick']} :No one to slap\r\n".encode('ascii'))
                 elif command == 'TOPIC':
                     print(f"User tryed to change the topic")
-              
                 
                 elif command == 'PONG':
                     # Need to create a PONG to keep the server in registered status True
