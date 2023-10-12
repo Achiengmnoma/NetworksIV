@@ -198,7 +198,6 @@ class Server:
                 
                 elif command == 'LIST':
                     # need to create a list command that shows all the available channels format LIST
-                    channels = []
                     num = 0
 
                     #ERROR TO BE FIXED: does not display the correct number of user's in each channel
@@ -215,6 +214,7 @@ class Server:
 
                     user_details['user'].send(f"{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n".encode('ascii'))
                     print(f"{addr_header_send}:{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n")
+                   
 
                 elif command == 'PRIVMSG':
                     # Takes the target, which could be a  channel or a nickname to be used to send to the right client
