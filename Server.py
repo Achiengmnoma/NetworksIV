@@ -140,7 +140,9 @@ class Server:
                 print (f"{addr_header_recieve} {message}")
                 
                 # Parse the message by spliting and then pulling out the all caps word to run the if statement on.
-                command = words[0].upper()
+                if len(words) >= 1:
+                    command = words[0].upper()
+                
                 if command == 'PASS':
                     user_details["password"] = words[1].strip()
 
@@ -255,8 +257,8 @@ class Server:
                     #print (channels)
 
                     user_details['user'].send(f"{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n".encode('ascii'))
-                    print(f"{addr_header_send}:{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n")  
-
+                    print(f"{addr_header_send}:{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n") 
+                     
                 elif command == 'PRIVMSG':
                     # Takes the target, which could be a  channel or a nickname to be used to send to the right client
                     target = words[1]  
