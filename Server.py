@@ -9,6 +9,7 @@ from itertools import count
 import socket
 import threading
 import queue
+import time
 
 # set the correct values for the address, and the port
 addr = '::1'
@@ -60,7 +61,26 @@ class Server:
             # Create a new thread to handle this client and allowing for multiple users connections
             threading.Thread(target=this.handle_client, args=(user, addr, user_queue)).start()
             threading.Thread(target=this.process_client_messages, args=(user, addr, user_queue)).start()
+            threading.Thread(target=this.keep_users_active).start()
 
+    def keep_users_active(this):
+        while True:
+            current_time = time.time()
+            for user_details in this.users:
+                # If the user has not sent a message in the last 60 seconds, send a PING
+                if current_time - user_details['last_msg_timestamp'] > 60:
+                    user_details['user'].send(f"PING :{user_details['hostname']}\r\n".encode('ascii'))
+
+                # If the user has not sent a message in the last 120 seconds, remove them
+                if current_time - user_details['last_msg_timestamp'] > 120:
+                    # Remove the user
+                    print(f"Removing {user_details['nick']} due to timeout.")
+                    this.users.remove(user_details)
+                    user_details['user'].close()
+
+            # Wait for 10 seconds before checking again
+            time.sleep(10)
+    
     # send function, which is used to send messages to the clients
     def Send(this, message):
         with this.lock:
@@ -72,7 +92,19 @@ class Server:
         print(f'{this.address} TEST')
     
     def handle_client(this, user, addr, user_queue):
-        user_details = {"addr": addr, "user": user, "nick": "", "username": "", "registered": False}
+        # Initialize user_details to None before the for loop
+        user_details = None
+
+        #checks to see if the user already exist in the this.users library
+        for existing_user_details in this.users:
+            if existing_user_details['user'] == user:
+                user_details = existing_user_details
+                break
+        #If not we need to make one so we do here.
+        if user_details is None:
+            user_details = {"addr": addr, "user": user, "nick": "", "username": "", "registered": False, "last_msg_timestamp": time.time()}
+            this.users.append(user_details)
+
         buffer = ""
         while True:
             data = user.recv(1024).decode('ascii')
@@ -86,7 +118,17 @@ class Server:
                 user_queue.put(line)
 
     def process_client_messages(this, user, addr, user_queue):
-        user_details = {"addr": addr, "user": user, "nick": "", "username": "", "registered": False}
+        user_details = None
+        #checks to see if the user already exist in the this.users library
+        for existing_user_details in this.users:
+            if existing_user_details['user'] == user:
+                user_details = existing_user_details
+                break
+        #If not we need to make one so we do here.
+        if user_details is None:
+            user_details = {"addr": addr, "user": user, "nick": "", "username": "", "registered": False, "last_msg_timestamp": time.time()}
+            this.users.append(user_details)
+
         addr_header_send = f"[{user_details['addr'][0]}:{user_details['addr'][1]}] <- b'"
         addr_header_recieve = f"[{user_details['addr'][0]}:{user_details['addr'][1]}] -> b'"
         while True:
@@ -213,8 +255,7 @@ class Server:
                     #print (channels)
 
                     user_details['user'].send(f"{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n".encode('ascii'))
-                    print(f"{addr_header_send}:{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n")
-                   
+                    print(f"{addr_header_send}:{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n")  
 
                 elif command == 'PRIVMSG':
                     # Takes the target, which could be a  channel or a nickname to be used to send to the right client
@@ -247,7 +288,13 @@ class Server:
                 elif command == 'PONG':
                     # Need to create a PONG to keep the server in registered status True
                     # Also need to setup a server send to client PIMGing them
-                    print(f"{addr_header_send} user replyed to PING")
+                    user_details['last_msg_timestamp'] = time.time()
+
+                    #debuging 
+                    print(f"Received: {message}")
+                    outgoing_message = f"PONG : 0\r\n"
+                    print(f"Sending: {outgoing_message}")
+                    user_details['user'].send(outgoing_message.encode('ascii'))
                 
                 # Checks that the user info is enough to be registered to the users list.
                 # Has the user_details stored in a local dictionary but not with the full details guaraneteed and should make sure all data is verified before finish.
@@ -275,14 +322,13 @@ class Server:
                     print(f"{addr_header_send}:{user_details['hostname']} 422 {user_details['nick']} :MOTD File is missing")
                     user_details['user'].send(f":{user_details['hostname']} 422 {user_details['nick']} :MOTD File is missing\r\n".encode("ascii"))
                     # Add user_details dictionary to the users list
-                    this.users.append(user_details)
+                    # should be done at the begining but leaving here for debuging.
+                    # this.users.append(user_details)
 
                     
 
                 # Tell the que that the current task is done    
                 user_queue.task_done()
-        
-
 # creates the new instance of the server, and launches it
 server = Server(addr, port)
 server.launch()
