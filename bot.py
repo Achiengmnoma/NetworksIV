@@ -63,10 +63,46 @@ class botUsers:
             #bot.server.send(f'PRIVMSG {channel} :{parsedmessage2}\r\n'.encode("ascii"))
             bot.server.send(f'PRIVMSG {channel} :List of channels displayed!\r\n'.encode("ascii"))
 
-        if message.find(f'PRIVMSG {channel} :!slap') != -1 or message.find(f'PRIVMSG {channel} :!slap') > 5:
-            bot.server.send(f'SLAP\r\n'.encode('ascii'))
-            bot.server.send(f'PRIVMSG {channel} :Slapping random user!\r\n'.encode("ascii"))
-            bot.SlapRandom()
+        if message.find(f'PRIVMSG {channel} :!slap') != -1:
+            sent_user = ''
+             # Extract sender's username from the message
+            colon_pos = message.find(':')
+            exclamation_pos = message.find('!')
+            if colon_pos != -1 and exclamation_pos != -1:
+                sent_user = message[colon_pos+1:exclamation_pos]
+            
+            target_username = message.split('!slap')[1].strip() if '!slap' in message else None
+
+            # Send LIST command to server to get the list of usernames
+            bot.server.send(f'NAMES\r\n'.encode('ascii'))
+            list_response = bot.server.recv(1024).decode('ascii')
+
+            print(list_response)
+
+            # Initialize an empty list to hold usernames
+            nick_list = []
+
+            # Split the response into lines
+            lines = list_response.split('\r\n')
+
+            # Loop through each line
+            for line in lines:
+                print(f"line: {line}")
+                # Only process lines that contain the '353' code as they contain usernames
+                if ' 353 ' in line:
+                    # Find the position of the last colon, which precedes the list of usernames
+                    last_colon_pos = line.rfind(':')
+                    
+                    # Extract and split the usernames
+                    usernames = line[last_colon_pos + 1:].strip().split(' ')
+                    nick_list.extend(usernames)
+
+            if target_username:
+                # Call SlapUser function to slap the target user
+                bot.SlapUser(target_username)
+            else:
+                # Call SlapRandom function to slap a random user
+                bot.SlapRandom(nick_list, sent_user)
 
     #send random facts to a user
     def sendFacts(bot,user):
@@ -92,33 +128,17 @@ class botUsers:
 
 
     # !slap (slapping a random user in the channel with a trout excluding the bot and the user sending it)
-    def SlapRandom(bot,username,nick):
-        # nicks = []
-        x = len(nick)
-        # username is the name of the user who sent the message
-        if x == 0:
-        # checks the length of the array of nicknames and stores it in x
-        # x = len(nicks)
-        # y = random.randrange(0, x)
-        # if x == 1:
-            print("Error do not have a person")
-        # error message
-        else:
-            y = random.randrange(0,x)
-            if nick[y] == username:
-                print("Cannot slap user(self)")
-            else:
-                data = "SuperBot slaps {} around a bit with a large trout".format(nick[y])
-                bot.server.send(data.encode())
-        # elif nicks[y] == username:
-        #     SlapRandom(bot,username) the recursive function was giving not defined
+    def SlapRandom(bot, nick_list,sent_user):
+        # nicks_list = [] of users in the channel
+        # sent_user = the user that called the !slap command
+        random_user = random.choice(nick_list)
+        bot.server.send(f'PRIVMSG #Bot_Commands : SuperBot slaps {random_user} around a bit with a large trout\r\n'.encode("ascii"))
         
 
     # !slap (slap a specific user)
-    def SlapUser(targetname):
+    def SlapUser(bot, targetname):
         # targetname is the name of the user to be slapped
-        data = "SuperBot slaps {} around a bit with a large trout".format(targetname)
-        bot.server.send(data.encode())
+        bot.server.send(f'PRIVMSG #Bot_Commands : SuperBot slaps {targetname} around a bit with a large trout\r\n'.encode("ascii"))
 
 
     # !slap (slapping the user sending it if that user is not in the channel)
