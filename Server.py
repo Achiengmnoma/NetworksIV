@@ -170,10 +170,23 @@ class Server:
                     this.run_PRIVMSG_Command(words, user_details, message, addr)
                 
                 elif command == 'TOPIC':
-                    this.print_To_Server(user_details, "User tryed to change the topic", "sent")
+                    THIS.run_TOPIC_Command(user_details, Message)
                 
                 elif command == 'PONG':
-                    this.run_PONG_Command(user_details, message)
+                    this.run_PONG_Command(user_details, message) 
+
+                elif command == 'PING':
+                    this.run_PING_Command(user_details, message)
+
+                elif command == "WHO":
+                    this.run_WHO_Command(user_details, message)
+
+                elif command == "MODE":
+                    this.run_MODE_Command(user_details, message)
+                
+                else:
+                    this.print_To_Server(user_details, f"{message}", "recieve")
+                    this.print_To_Server(user_details, "invalid command sent please use from this list of commands (PASS, NICK, USER, CAP, JOIN, PART, QUIT, LIST, NAMES, PRIVMSG, TOPIC, PONG)", "recieve")
 
                 
                 # Checks that the user info is enough to be registered to the users list.
@@ -195,6 +208,46 @@ class Server:
         user_details["hostname"] = hostname
         user_details["servername"] = servername
         user_details["realname"] = message.split(":", 1)[1].strip()  # Stripping the leading ':'
+    
+    def run_PING_Command(this, user_details, message):
+        parameters = message.split()[1:]
+        pong_response = 'PONG ' + ' '.join(parameters)
+        this.safe_send(user_details['user'], pong_response)
+
+    def run_WHO_Command(this, user_details, message):
+        parameters = message.split()[1:]
+        channel = parameters[0] if parameters else '*'
+        
+        user_list = []  
+        for username in this.users:
+            user_list.append(username)
+        
+        for user in user_list:
+            who_response = f"352 {user_details['nick']} {channel} {user_details['username']} {user_details['hostname']} {user_details['servername']} {user_details['nick']} H :0 {user_details['realname']}"
+            this.safe_send(user_details['user'],who_response + '\r\n' )
+        
+        end_response = f"315 {user_details['nick']} {channel} :End of WHO list"
+        this.safe_send(user_details['user'], end_response + '\r\n')
+    
+    def run_MODE_Command(this, user_details, message):
+        params = message.split()[1:]
+        target = params[0]
+        modes = params[1] if len(params) > 1 else None
+        mode_params = params[2:] if len(params) > 2 else None
+        
+        if target.startswith("#"):
+            #this is where we would do channel modes
+            pass
+        elif target == user_details['nick']:
+            # this is where you would do user modes
+            pass
+        
+        #detailed responce based on what mode was sent and if there were perams sent needs the if then because params are not always send in MODE commands
+        mode_response = f":{user_details['nick']}!{user_details['username']}@{user_details['hostname']} MODE {target} {modes} {' '.join(mode_params) if mode_params else ''}"
+        this.safe_send(user_details['user'], mode_response + '\r\n')
+    
+    def run_TOPIC_Command(this, user_details, message):
+        this.print_To_Server(user_details, "TOPIC ran", "sent")
 
     def run_JOIN_Command(this, words, user_details):
         channel_name = words[1].strip()
@@ -352,7 +405,7 @@ class Server:
         #this needs to be updated to not be hardcoded this will be done when you can set the Message of The Day
         this.print_To_Server(user_details, f":{user_details['hostname']} 422 {user_details['nick']} :MOTD File is missing", "sent")
         this.safe_send(user_details['user'], f":{user_details['hostname']} 422 {user_details['nick']} :MOTD File is missing\r\n")
-        
+
     def safe_send(this, socket, message):
         try:
             if isinstance(message, str):
