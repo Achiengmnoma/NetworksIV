@@ -74,7 +74,7 @@ class Server:
             for user_details in this.users:
                 # If the user has not sent a message in the last 60 seconds, send a PING
                 if current_time - user_details['last_msg_timestamp'] > 60:
-                    this.safe_send(user_details['user'], f"PING :{user_details['hostname']}\r\n")
+                    this.safe_Send(user_details['user'], f"PING :{user_details['hostname']}\r\n")
 
                 # If the user has not sent a message in the last 120 seconds, remove them
                 if current_time - user_details['last_msg_timestamp'] > 120:
@@ -195,7 +195,7 @@ class Server:
                     this.print_To_Server(user_details, f"{message}", "recieve")
                     message_text = f"invalid command sent please use from this list of commands (PASS, NICK, USER, CAP, JOIN, PART, QUIT, LIST, NAMES, PRIVMSG, TOPIC, PONG, PING, WHO, MODE)"
                     this.print_To_Server(user_details, message_text, "recieve")
-                    this.safe_send(user_details['user'], f":{user_details['nick']}!{user_details['username']}@{addr[0]} PRIVMSG {user_details['nick']} :{message_text}\r\n")
+                    this.safe_Send(user_details['user'], f":{user_details['nick']}!{user_details['username']}@{addr[0]} PRIVMSG {user_details['nick']} :{message_text}\r\n")
                 
                 # Checks that the user info is enough to be registered to the users list.
                 # Has the user_details stored in a local dictionary but not with the full details guaraneteed and should make sure all data is verified before finish.
@@ -229,7 +229,7 @@ class Server:
         lag_identifier = parameters[0] if parameters else None
         
         pong_response = f'PONG {lag_identifier}\r\n' if lag_identifier else 'PONG\r\n'
-        this.safe_send(user_details['user'], pong_response)     
+        this.safe_Send(user_details['user'], pong_response)     
 
     def run_WHO_Command(this, user_details, message):
         parameters = message.split()[1:]
@@ -241,10 +241,10 @@ class Server:
         
         for user in user_list:
             who_response = f"352 {user_details['nick']} {channel} {user_details['username']} {user_details['hostname']} {user_details['servername']} {user_details['nick']} H :0 {user_details['realname']}"
-            this.safe_send(user_details['user'],who_response + '\r\n' )
+            this.safe_Send(user_details['user'],who_response + '\r\n' )
         
         end_response = f"315 {user_details['nick']} {channel} :End of WHO list"
-        this.safe_send(user_details['user'], end_response + '\r\n')
+        this.safe_Send(user_details['user'], end_response + '\r\n')
     
     def run_MODE_Command(this, user_details, message):
         params = message.split()[1:]
@@ -261,7 +261,7 @@ class Server:
         
         #detailed responce based on what mode was sent and if there were perams sent needs the if then because params are not always send in MODE commands
         mode_response = f":{user_details['nick']}!{user_details['username']}@{user_details['hostname']} MODE {target} {modes} {' '.join(mode_params) if mode_params else ''}"
-        this.safe_send(user_details['user'], mode_response + '\r\n')
+        this.safe_Send(user_details['user'], mode_response + '\r\n')
     
     def run_TOPIC_Command(this, user_details, message):
         params = message.split()[1:]
@@ -271,10 +271,10 @@ class Server:
         if channel_name in this.channels:
             this.channels[channel_name]["topic"] = new_topic
             topic_response = f":{user_details['nick']}!{user_details['username']}@{user_details['hostname']} TOPIC {channel_name} :{new_topic}"
-            this.safe_send(user_details['user'], topic_response)
+            this.safe_Send(user_details['user'], topic_response)
         else:
             # there might be an IRC code to let the sender know this
-            this.safe_send(user_details['user'], "That channel does not exist so you can't set the topic")
+            this.safe_Send(user_details['user'], "That channel does not exist so you can't set the topic")
 
     def run_JOIN_Command(this, words, user_details):
         channel_name = words[1].strip()
@@ -293,13 +293,13 @@ class Server:
         # Broadcast to the other users of that server that the client has JOINed
         # This happens regularly and needs to be able to be sent more often using the LIST command I think
         for channel_user in this.channels[channel_name]["users"]:
-            this.safe_send(channel_user['user'], f":{user_details['nick']}!{user_details['username']}@{addr[0]} JOIN {channel_name}\r\n")
+            this.safe_Send(channel_user['user'], f":{user_details['nick']}!{user_details['username']}@{addr[0]} JOIN {channel_name}\r\n")
 
-            this.safe_send(channel_user['user'], f":{user_details['hostname']} 331 {user_details['nick']} {channel_name} :No Topic is set\r\n")
+            this.safe_Send(channel_user['user'], f":{user_details['hostname']} 331 {user_details['nick']} {channel_name} :No Topic is set\r\n")
             #This is where you send the name list info
-            this.safe_send(channel_user['user'], f":{user_details['hostname']} 353 {user_details['nick']} = {channel_name} :{names_list}\r\n")
+            this.safe_Send(channel_user['user'], f":{user_details['hostname']} 353 {user_details['nick']} = {channel_name} :{names_list}\r\n")
             #This is where you tell the client that you are at the end of the names list
-            this.safe_send(channel_user['user'], f":{user_details['hostname']} 366 {user_details['nick']} {channel_name} :End of names list\r\n")
+            this.safe_Send(channel_user['user'], f":{user_details['hostname']} 366 {user_details['nick']} {channel_name} :End of names list\r\n")
 
     def run_QUIT_Command(this, words, user_details, message):
         # Parse optional quit message then split it from the command word
@@ -312,7 +312,7 @@ class Server:
             channel_users = channel_info["users"]
             if user_details in channel_users:
                 for channel_user in channel_users:
-                    this.safe_send(channel_user['user'], f":{user_details['nick']}!{user_details['username']}@{addr[0]} QUIT :{optional_message}\r\n")
+                    this.safe_Send(channel_user['user'], f":{user_details['nick']}!{user_details['username']}@{addr[0]} QUIT :{optional_message}\r\n")
                 # Remove the user from this channel
                 channel_users.remove(user_details)
 
@@ -334,11 +334,11 @@ class Server:
             num_users_in_channel = len(channel_users)
             
             # Send the 322 numeric reply back to the client for each channel
-            this.safe_send(user_details['user'], f":{user_details['hostname']} 322 {user_details['nick']} {channel_name} {num_users_in_channel} :\r\n")
+            this.safe_Send(user_details['user'], f":{user_details['hostname']} 322 {user_details['nick']} {channel_name} {num_users_in_channel} :\r\n")
             this.print_To_Server(user_details, f":{user_details['hostname']} 322 {user_details['nick']} {channel_name} {num_users_in_channel} :", "sent")
 
         # Send the 'End of LIST' 323 numeric reply to the client
-        this.safe_send(user_details['user'], f":{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n")
+        this.safe_Send(user_details['user'], f":{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n")
         this.print_To_Server(user_details, f":{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n", "sent")
     
     def run_NAMES_Command(this, words, user_details):
@@ -357,10 +357,10 @@ class Server:
                 
                 
                 # Send the 353 send the info to the client
-                this.safe_send(user_details['user'], f":{user_details['hostname']} 353 {user_details['nick']} = {channel_name} :{names_list}\r\n")
+                this.safe_Send(user_details['user'], f":{user_details['hostname']} 353 {user_details['nick']} = {channel_name} :{names_list}\r\n")
                 
                 # Send the 366 send end of names to the client
-                this.safe_send(user_details['user'], f":{user_details['hostname']} 366 {user_details['nick']} {channel_name} :End of NAMES list\r\n")
+                this.safe_Send(user_details['user'], f":{user_details['hostname']} 366 {user_details['nick']} {channel_name} :End of NAMES list\r\n")
                 
         else:  # If no channel name is provided, list names for all channels
             for channel_name, channel_info in this.channels.items():
@@ -370,10 +370,10 @@ class Server:
                 
                 
                 # Send the 353 numeric reply
-                this.safe_send(user_details['user'], f":{user_details['hostname']} 353 {user_details['nick']} = {channel_name} :{names_list}\r\n")
+                this.safe_Send(user_details['user'], f":{user_details['hostname']} 353 {user_details['nick']} = {channel_name} :{names_list}\r\n")
                 
                 # Send the 366 numeric reply to indicate the end of the list
-                this.safe_send(user_details['user'], f":{user_details['hostname']} 366 {user_details['nick']} {channel_name} :End of NAMES list\r\n")
+                this.safe_Send(user_details['user'], f":{user_details['hostname']} 366 {user_details['nick']} {channel_name} :End of NAMES list\r\n")
 
     def run_PRIVMSG_Command(this, words, user_details, message, addr):
         # Takes the target, which could be a  channel or a nickname to be used to send to the right client
@@ -388,14 +388,14 @@ class Server:
                 for channel_user in this.channels[target]["users"]:
                     # however you don't want to send the message twice so you need to exclude yourself as a channel_user from the channels list
                     if channel_user['addr'] != addr:
-                        this.safe_send(channel_user['user'], f":{user_details['nick']}!{user_details['username']}@{addr[0]} PRIVMSG {target} :{message_text}\r\n")
+                        this.safe_Send(channel_user['user'], f":{user_details['nick']}!{user_details['username']}@{addr[0]} PRIVMSG {target} :{message_text}\r\n")
                     
         # If the target is a nickname
         else:
             # Send the message to the user with the target nickname
             for user in this.users:
                 if user['nick'] == target:
-                    this.safe_send(user['user'], f":{user_details['nick']}!{user_details['username']}@{addr[0]} PRIVMSG {target} :{message_text}\r\n")
+                    this.safe_Send(user['user'], f":{user_details['nick']}!{user_details['username']}@{addr[0]} PRIVMSG {target} :{message_text}\r\n")
                     break 
         #Logs the message to the Server in the correct way
         this.print_To_Server(user_details, f"Message sent to {target}", "sent")
@@ -406,7 +406,7 @@ class Server:
         this.print_To_Server(user_details, f"Received: {message}", "received")
         outgoing_message = f"PONG : 0\r\n"
         this.print_To_Server(user_details, f"Sending: {outgoing_message}", "sent")
-        this.safe_send(user_details['user'], outgoing_message)
+        this.safe_Send(user_details['user'], outgoing_message)
 
     def print_To_Server(this, user_details, message, dir):
         addr_header_send = f"[{user_details['addr'][0]}:{user_details['addr'][1]}] <- b'"
@@ -421,28 +421,28 @@ class Server:
         user_details["registered"] = True
         # Send welcome message etc. as per IRC 002
         this.print_To_Server(user_details, f":{user_details['hostname']} 001 {user_details['nick']} :Hi, welcome to IRC.", "sent")
-        this.safe_send(user_details['user'], f":{user_details['hostname']} 001 {user_details['nick']} :Hi, welcome to IRC.\r\n")
+        this.safe_Send(user_details['user'], f":{user_details['hostname']} 001 {user_details['nick']} :Hi, welcome to IRC.\r\n")
         # Send version number per 002
         this.print_To_Server(user_details, f"{user_details['hostname']} 002 {user_details['nick']} :Your host is {user_details['hostname']} running version Group 7 IRC 1.0", "sent")
-        this.safe_send(user_details['user'], f":{user_details['hostname']} 002 {user_details['nick']} :Your host is {user_details['hostname']} running version Group 7 IRC 1.0\r\n")
+        this.safe_Send(user_details['user'], f":{user_details['hostname']} 002 {user_details['nick']} :Your host is {user_details['hostname']} running version Group 7 IRC 1.0\r\n")
         # Send Server created time per 003
         this.print_To_Server(user_details, f":{user_details['hostname']} 003 {user_details['nick']} :This server was created sometime", "sent")
-        this.safe_send(user_details['user'], f":{user_details['hostname']} 003 {user_details['nick']} :This server was created sometime\r\n")
+        this.safe_Send(user_details['user'], f":{user_details['hostname']} 003 {user_details['nick']} :This server was created sometime\r\n")
         # Send connection successfull 004
         this.print_To_Server(user_details, f":{user_details['hostname']} 004 {user_details['nick']} {user_details['hostname']} Group 7 IRC 1.0 :", "sent")
-        this.safe_send(user_details['user'], f":{user_details['hostname']} 004 {user_details['nick']} {user_details['hostname']} Group 7 IRC 1.0\r\n")
+        this.safe_Send(user_details['user'], f":{user_details['hostname']} 004 {user_details['nick']} {user_details['hostname']} Group 7 IRC 1.0\r\n")
         count = 0
         for user_details in this.users:
             count += 1
         #This needs to be updated with the proper number of users.
         this.print_To_Server(user_details, f":{user_details['hostname']} 251 {user_details['nick']} :There are {count} users and 0 services on 1 server", "sent")
-        this.safe_send(user_details['user'], f":{user_details['hostname']} 251 {user_details['nick']} :There are {count} users and 0 services on 1 server\r\n")
+        this.safe_Send(user_details['user'], f":{user_details['hostname']} 251 {user_details['nick']} :There are {count} users and 0 services on 1 server\r\n")
 
         #this needs to be updated to not be hardcoded this will be done when you can set the Message of The Day
         this.print_To_Server(user_details, f":{user_details['hostname']} 422 {user_details['nick']} :MOTD File is missing", "sent")
-        this.safe_send(user_details['user'], f":{user_details['hostname']} 422 {user_details['nick']} :MOTD File is missing\r\n")
+        this.safe_Send(user_details['user'], f":{user_details['hostname']} 422 {user_details['nick']} :MOTD File is missing\r\n")
 
-    def safe_send(this, socket, message):
+    def safe_Send(this, socket, message):
         try:
             if isinstance(message, str):
                 message = message.encode('ascii')
