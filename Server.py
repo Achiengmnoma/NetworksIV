@@ -228,8 +228,7 @@ class Server:
         lag_identifier = parameters[0] if parameters else None
         
         pong_response = f'PONG {lag_identifier}\r\n' if lag_identifier else 'PONG\r\n'
-        this.safe_send(user_details['user'], pong_response)
-        
+        this.safe_send(user_details['user'], pong_response)     
 
     def run_WHO_Command(this, user_details, message):
         parameters = message.split()[1:]
