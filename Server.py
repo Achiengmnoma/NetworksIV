@@ -352,6 +352,7 @@ class Server:
         #this needs to be updated to not be hardcoded this will be done when you can set the Message of The Day
         this.print_To_Server(user_details, f":{user_details['hostname']} 422 {user_details['nick']} :MOTD File is missing", "sent")
         this.safe_send(user_details['user'], f":{user_details['hostname']} 422 {user_details['nick']} :MOTD File is missing\r\n")
+        
     def safe_send(this, socket, message):
         try:
             if isinstance(message, str):
