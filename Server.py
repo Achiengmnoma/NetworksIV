@@ -193,8 +193,9 @@ class Server:
                 
                 else:
                     this.print_To_Server(user_details, f"{message}", "recieve")
-                    this.print_To_Server(user_details, "invalid command sent please use from this list of commands (PASS, NICK, USER, CAP, JOIN, PART, QUIT, LIST, NAMES, PRIVMSG, TOPIC, PONG)", "recieve")
-
+                    message_text = f"invalid command sent please use from this list of commands (PASS, NICK, USER, CAP, JOIN, PART, QUIT, LIST, NAMES, PRIVMSG, TOPIC, PONG, PING, WHO, MODE)"
+                    this.print_To_Server(user_details, message_text, "recieve")
+                    this.safe_send(user_details['user'], f":{user_details['nick']}!{user_details['username']}@{addr[0]} PRIVMSG {user_details['nick']} :{message_text}\r\n")
                 
                 # Checks that the user info is enough to be registered to the users list.
                 # Has the user_details stored in a local dictionary but not with the full details guaraneteed and should make sure all data is verified before finish.
