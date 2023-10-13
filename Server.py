@@ -103,18 +103,9 @@ class Server:
         buffer = ""
         #Need an if statement here to check to see if the connection is active before trying to read data from them. populates and exception when discconnecting
         while True:
-            # Check if client is still connected select selected brings in a [rlist] of clients ready to get incoming data and times them out if not 
-            ready_to_read, _, _ = select.select([user], [], [], 5)
-            if ready_to_read:
-                try:
-                    data = user.recv(1024).decode('ascii')
-                except:
-                    print(f"An error occurred with client {addr}. Disconnecting.")
-                    break
-
-                if not data:
-                    print(f"Client {addr} has disconnected.")
-                    break
+            data = user.recv(1024).decode('ascii')
+            if not data:
+                break
 
             buffer += data
 
@@ -364,10 +355,9 @@ class Server:
         try:
             if isinstance(message, str):
                 message = message.encode('ascii')
-            socket.sendall(message)
+            socket.send(message)
         except (BrokenPipeError, ConnectionResetError, OSError):
             print("Client disconnected unexpectedly.")
-            socket.close()
 # creates the new instance of the server, and launches it
 server = Server(addr, port)
 server.launch()
