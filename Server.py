@@ -29,7 +29,7 @@ class Server:
         # socket connection, using IPv6
         this.server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
 
-        # an arry of user dictionarys that contain all info needed to manage connections
+        # an array of user dictionaries that contain all info needed to manage connections
         this.users = []
 
         # dictionary for channels that include users and the topics for each associated channel
@@ -61,7 +61,7 @@ class Server:
             user, addr = this.server.accept()
             print(f"Accepted connection from {addr}")
 
-            #This is a que for the messages sent to register the users
+            #This is a queue for the messages sent to register the users
             user_queue = queue.Queue()
             # Create a new thread to allow for multiple users to send and recieve data at the same time.
             threading.Thread(target=this.handle_Client, args=(user, addr, user_queue)).start()
@@ -136,7 +136,7 @@ class Server:
                 #uses the queue to get the next message
                 message = user_queue.get()
                 words = message.split()
-                #recieved message log into the server
+                #received message log into the server
                 this.print_To_Server(user_details, f"{message}", "recieve")
                 
                 
@@ -259,7 +259,7 @@ class Server:
             # this is where you would do user modes
             pass
         
-        #detailed responce based on what mode was sent and if there were perams sent needs the if then because params are not always send in MODE commands
+        #detailed response based on what mode was sent and if there were perams sent needs the if then because params are not always send in MODE commands
         mode_response = f":{user_details['nick']}!{user_details['username']}@{user_details['hostname']} MODE {target} {modes} {' '.join(mode_params) if mode_params else ''}"
         this.safe_Send(user_details['user'], mode_response + '\r\n')
     
