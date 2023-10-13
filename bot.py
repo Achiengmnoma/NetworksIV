@@ -158,12 +158,10 @@ class botUsers:
         else:
             bot.server.send(f'PRIVMSG {bot.channel} : {bot.nick} slaps {sent_user} around a bit with a large trout. Next time make sure there is someone else to slap!\r\n'.encode("ascii"))
             
-
     # !slap (slap a specific user)
     def SlapUser(bot, targetname):
         # targetname is the name of the user to be slapped
         bot.server.send(f'PRIVMSG {bot.channel} : {bot.nick} slaps {targetname} around a bit with a large trout\r\n'.encode("ascii"))
-
 
     # !slap (slapping the user sending it if that user is not in the channel)
     def SlapSender(username):
@@ -180,14 +178,14 @@ class botUsers:
         print ("Looking up " + str(bot.addr))
         print ("Connecting to " + str(bot.addr) + ":" + str(bot.port))
 
-        # sends the PASS USER and NICK and welcome message to the server
-        # bot.server.send(bytes("PASS Test1234\r\n", "ascii"))
-        # bot.server.send(bytes("USER {bot.nick} ThisPC ThisServer :{bot.nick}\r\n", "ascii"))
-        # bot.server.send(bytes("NICK {bot.nick}\r\n", "ascii"))
+        #sends the PASS USER and NICK and welcome message to the server
+        bot.server.send(bytes(f"PASS Test1234\r\n", "ascii"))
+        bot.server.send(bytes(f"USER {bot.nick} ThisPC ThisServer :{bot.nick}\r\n", "ascii"))
+        bot.server.send(bytes(f"NICK {bot.nick}\r\n", "ascii"))
 
-        bot.server.send(f"PASS Test1234\r\n".encode("ascii"))
-        bot.server.send(f"USER {bot.nick} ThisPC ThisServer :{bot.nick}\r\n".encode("ascii"))
-        bot.server.send(f"NICK {bot.nick}\r\n".encode("ascii"))
+        # bot.server.send(f"PASS Test1234\r\n".encode("ascii"))
+        # bot.server.send(f"USER {bot.nick} ThisPC ThisServer :{bot.nick}\r\n".encode("ascii"))
+        # bot.server.send(f"NICK {bot.nick}\r\n".encode("ascii"))
         
         #displays that the bot has connected, and maintains the connecion
         while True:

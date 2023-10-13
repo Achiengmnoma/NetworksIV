@@ -11,6 +11,7 @@ import threading
 import queue
 import time
 import argparse
+import select
 
 parser = argparse.ArgumentParser(description='IRC Server for Networking')
 parser.add_argument('--host', type=str, help='Specify the host address')
@@ -28,7 +29,7 @@ class Server:
         # socket connection, using IPv6
         this.server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
 
-        # creates empty arrays to store users and the nicknames of these users as well as connection in a list of dictionaries for each user.
+        # an arry of user dictionarys that contain all info needed to manage connections
         this.users = []
 
         # dictionary for channels { "#channel_name": [list_of_users] }
@@ -38,7 +39,7 @@ class Server:
         this.addr = addr
         this.port = port
         
-        #prevents accessing data at the same time with multi threads by locking it
+        # prevents accessing data at the same time with multi threads by locking it
         this.lock = threading.Lock()  
 
     def launch(this):
@@ -62,7 +63,7 @@ class Server:
 
             #This is a que for the messages sent to register the users
             user_queue = queue.Queue()
-            # Create a new thread to handle this client and allowing for multiple users connections
+            # Create a new thread to allow for multiple users to send and recieve data at the same time.
             threading.Thread(target=this.handle_Client, args=(user, addr, user_queue)).start()
             threading.Thread(target=this.process_Client_Messages, args=(user, addr, user_queue)).start()
             threading.Thread(target=this.keep_Users_Active).start()
@@ -73,7 +74,7 @@ class Server:
             for user_details in this.users:
                 # If the user has not sent a message in the last 60 seconds, send a PING
                 if current_time - user_details['last_msg_timestamp'] > 60:
-                    user_details['user'].send(f"PING :{user_details['hostname']}\r\n".encode('ascii'))
+                    this.safe_send(user_details['user'], f"PING :{user_details['hostname']}\r\n")
 
                 # If the user has not sent a message in the last 120 seconds, remove them
                 if current_time - user_details['last_msg_timestamp'] > 120:
@@ -102,9 +103,18 @@ class Server:
         buffer = ""
         #Need an if statement here to check to see if the connection is active before trying to read data from them. populates and exception when discconnecting
         while True:
-            data = user.recv(1024).decode('ascii')
-            if not data:
-                break
+            # Check if client is still connected select selected brings in a [rlist] of clients ready to get incoming data and times them out if not 
+            ready_to_read, _, _ = select.select([user], [], [], 5)
+            if ready_to_read:
+                try:
+                    data = user.recv(1024).decode('ascii')
+                except:
+                    print(f"An error occurred with client {addr}. Disconnecting.")
+                    break
+
+                if not data:
+                    print(f"Client {addr} has disconnected.")
+                    break
 
             buffer += data
 
@@ -211,18 +221,13 @@ class Server:
         # Broadcast to the other users of that server that the client has JOINed
         # This happens regularly and needs to be able to be sent more often using the LIST command I think
         for channel_user in this.channels[channel_name]:
-            channel_user['user'].send(f":{user_details['nick']}!{user_details['username']}@{addr[0]} JOIN {channel_name}\r\n".encode('ascii'))
+            this.safe_send(channel_user['user'], f":{user_details['nick']}!{user_details['username']}@{addr[0]} JOIN {channel_name}\r\n")
 
-            # Trying to implement the topic lookup if statement but the Data Structure does not work for this
-            # if this.channels[channel_name].get("topic", None):
-            #     channel_user['user'].send(f":{user_details['hostname']} 331 {user_details['nick']} {channel_name} :{this.channels[channel_name]['topic']}\r\n".encode('ascii'))
-            # else:
-            channel_user['user'].send(f":{user_details['hostname']} 331 {user_details['nick']} {channel_name} :No Topic is set\r\n".encode('ascii'))
+            this.safe_send(channel_user['user'], f":{user_details['hostname']} 331 {user_details['nick']} {channel_name} :No Topic is set\r\n")
             #This is where you send the name list info
-            channel_user['user'].send(f":{user_details['hostname']} 353 {user_details['nick']} = {channel_name} :{names_list}\r\n".encode('ascii'))
+            this.safe_send(channel_user['user'], f":{user_details['hostname']} 353 {user_details['nick']} = {channel_name} :{names_list}\r\n")
             #This is where you tell the client that you are at the end of the names list
-
-            channel_user['user'].send(f":{user_details['hostname']} 366 {user_details['nick']} {channel_name} :End of names list\r\n".encode('ascii'))
+            this.safe_send(channel_user['user'], f":{user_details['hostname']} 366 {user_details['nick']} {channel_name} :End of names list\r\n")
 
     def run_QUIT_Command(this, words, user_details, message):
         # Parse optional quit message then split it from the command word
@@ -234,7 +239,7 @@ class Server:
         for channel_name, channel_users in this.channels.items():
             if user_details in channel_users:
                 for channel_user in channel_users:
-                    channel_user['user'].send(f":{user_details['nick']}!{user_details['username']}@{addr[0]} QUIT :{optional_message}\r\n".encode('ascii'))
+                    this.safe_send(channel_user['user'], f":{user_details['nick']}!{user_details['username']}@{addr[0]} QUIT :{optional_message}\r\n")
                 # Remove the user from this channel
                 channel_users.remove(user_details)
 
@@ -255,11 +260,11 @@ class Server:
             num_users_in_channel = len(channel_users)
             
             # Send the 322 numeric reply back to the client for each channel
-            user_details['user'].send(f":{user_details['hostname']} 322 {user_details['nick']} {channel_name} {num_users_in_channel} :\r\n".encode('ascii'))
+            this.safe_send(user_details['user'], f":{user_details['hostname']} 322 {user_details['nick']} {channel_name} {num_users_in_channel} :\r\n")
             this.print_To_Server(user_details, f":{user_details['hostname']} 322 {user_details['nick']} {channel_name} {num_users_in_channel} :", "sent")
 
         # Send the 'End of LIST' 323 numeric reply to the client
-        user_details['user'].send(f":{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n".encode('ascii'))
+        this.safe_send(user_details['user'], f":{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n")
         this.print_To_Server(user_details, f":{user_details['hostname']} 323 {user_details['nick']} :End of LIST\r\n", "sent")
     
     def run_NAMES_Command(this, words, user_details):
@@ -273,10 +278,10 @@ class Server:
                 names_list = " ".join([u['nick'] for u in this.channels[channel_name]])
                 
                 # Send the 353 send the info to the client
-                user_details['user'].send(f":{user_details['hostname']} 353 {user_details['nick']} = {channel_name} :{names_list}\r\n".encode('ascii'))
+                this.safe_send(user_details['user'], f":{user_details['hostname']} 353 {user_details['nick']} = {channel_name} :{names_list}\r\n")
                 
                 # Send the 366 send end of names to the client
-                user_details['user'].send(f":{user_details['hostname']} 366 {user_details['nick']} {channel_name} :End of NAMES list\r\n".encode('ascii'))
+                this.safe_send(user_details['user'], f":{user_details['hostname']} 366 {user_details['nick']} {channel_name} :End of NAMES list\r\n")
                 
         else:  # If no channel name is provided, list names for all channels
             for channel_name, channel_users in this.channels.items():
@@ -284,10 +289,10 @@ class Server:
                 names_list = " ".join([u['nick'] for u in channel_users])
                 
                 # Send the 353 numeric reply
-                user_details['user'].send(f":{user_details['hostname']} 353 {user_details['nick']} = {channel_name} :{names_list}\r\n".encode('ascii'))
+                this.safe_send(user_details['user'], f":{user_details['hostname']} 353 {user_details['nick']} = {channel_name} :{names_list}\r\n")
                 
                 # Send the 366 numeric reply to indicate the end of the list
-                user_details['user'].send(f":{user_details['hostname']} 366 {user_details['nick']} {channel_name} :End of NAMES list\r\n".encode('ascii'))
+                this.safe_send(user_details['user'], f":{user_details['hostname']} 366 {user_details['nick']} {channel_name} :End of NAMES list\r\n")
 
     def run_PRIVMSG_Command(this, words, user_details, message, addr):
         # Takes the target, which could be a  channel or a nickname to be used to send to the right client
@@ -302,14 +307,14 @@ class Server:
                 for channel_user in this.channels[target]:
                     # however you don't want to send the message twice so you need to exclude yourself as a channel_user from the channels list
                     if channel_user['addr'] != addr:
-                        channel_user['user'].send(f":{user_details['nick']}!{user_details['username']}@{addr[0]} PRIVMSG {target} :{message_text}\r\n".encode('ascii'))
+                        this.safe_send(channel_user['user'], f":{user_details['nick']}!{user_details['username']}@{addr[0]} PRIVMSG {target} :{message_text}\r\n")
                     
         # If the target is a nickname
         else:
             # Send the message to the user with the target nickname
             for user in this.users:
                 if user['nick'] == target:
-                    user['user'].send(f":{user_details['nick']}!{user_details['username']}@{addr[0]} PRIVMSG {target} :{message_text}\r\n".encode('ascii'))
+                    this.safe_send(user['user'], f":{user_details['nick']}!{user_details['username']}@{addr[0]} PRIVMSG {target} :{message_text}\r\n")
                     break 
         #Logs the message to the Server in the correct way
         this.print_To_Server(user_details, f"Message sent to {target}", "sent")
@@ -320,7 +325,7 @@ class Server:
         this.print_To_Server(user_details, f"Received: {message}", "received")
         outgoing_message = f"PONG : 0\r\n"
         this.print_To_Server(user_details, f"Sending: {outgoing_message}", "sent")
-        user_details['user'].send(outgoing_message.encode('ascii'))
+        this.safe_send(user_details['user'], outgoing_message)
 
     def print_To_Server(this, user_details, message, dir):
         addr_header_send = f"[{user_details['addr'][0]}:{user_details['addr'][1]}] <- b'"
@@ -335,26 +340,34 @@ class Server:
         user_details["registered"] = True
         # Send welcome message etc. as per IRC 002
         this.print_To_Server(user_details, f":{user_details['hostname']} 001 {user_details['nick']} :Hi, welcome to IRC.", "sent")
-        user_details['user'].send(f":{user_details['hostname']} 001 {user_details['nick']} :Hi, welcome to IRC.\r\n".encode("ascii"))
+        this.safe_send(user_details['user'], f":{user_details['hostname']} 001 {user_details['nick']} :Hi, welcome to IRC.\r\n")
         # Send version number per 002
         this.print_To_Server(user_details, f"{user_details['hostname']} 002 {user_details['nick']} :Your host is {user_details['hostname']} running version Group 7 IRC 1.0", "sent")
-        user_details['user'].send(f":{user_details['hostname']} 002 {user_details['nick']} :Your host is {user_details['hostname']} running version Group 7 IRC 1.0\r\n".encode("ascii"))
+        this.safe_send(user_details['user'], f":{user_details['hostname']} 002 {user_details['nick']} :Your host is {user_details['hostname']} running version Group 7 IRC 1.0\r\n")
         # Send Server created time per 003
         this.print_To_Server(user_details, f":{user_details['hostname']} 003 {user_details['nick']} :This server was created sometime", "sent")
-        user_details['user'].send(f":{user_details['hostname']} 003 {user_details['nick']} :This server was created sometime\r\n".encode("ascii"))
+        this.safe_send(user_details['user'], f":{user_details['hostname']} 003 {user_details['nick']} :This server was created sometime\r\n")
         # Send connection successfull 004
         this.print_To_Server(user_details, f":{user_details['hostname']} 004 {user_details['nick']} {user_details['hostname']} Group 7 IRC 1.0 :", "sent")
-        user_details['user'].send(f":{user_details['hostname']} 004 {user_details['nick']} {user_details['hostname']} Group 7 IRC 1.0\r\n".encode("ascii"))
+        this.safe_send(user_details['user'], f":{user_details['hostname']} 004 {user_details['nick']} {user_details['hostname']} Group 7 IRC 1.0\r\n")
         count = 0
         for user_details in this.users:
             count += 1
         #This needs to be updated with the proper number of users.
         this.print_To_Server(user_details, f":{user_details['hostname']} 251 {user_details['nick']} :There are {count} users and 0 services on 1 server", "sent")
-        user_details['user'].send(f":{user_details['hostname']} 251 {user_details['nick']} :There are {count} users and 0 services on 1 server\r\n".encode("ascii"))
+        this.safe_send(user_details['user'], f":{user_details['hostname']} 251 {user_details['nick']} :There are {count} users and 0 services on 1 server\r\n")
 
         #this needs to be updated to not be hardcoded this will be done when you can set the Message of The Day
         this.print_To_Server(user_details, f":{user_details['hostname']} 422 {user_details['nick']} :MOTD File is missing", "sent")
-        user_details['user'].send(f":{user_details['hostname']} 422 {user_details['nick']} :MOTD File is missing\r\n".encode("ascii"))
+        this.safe_send(user_details['user'], f":{user_details['hostname']} 422 {user_details['nick']} :MOTD File is missing\r\n")
+    def safe_send(this, socket, message):
+        try:
+            if isinstance(message, str):
+                message = message.encode('ascii')
+            socket.sendall(message)
+        except (BrokenPipeError, ConnectionResetError, OSError):
+            print("Client disconnected unexpectedly.")
+            socket.close()
 # creates the new instance of the server, and launches it
 server = Server(addr, port)
 server.launch()
