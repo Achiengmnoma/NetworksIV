@@ -33,7 +33,7 @@ class Server:
         this.users = []
 
         # dictionary for channels { "#channel_name": [list_of_users] }
-        this.channels = {}  
+        this.channels = {}
 
         # assigns the correct values to the addr and port variables of the object
         this.addr = addr
@@ -83,8 +83,8 @@ class Server:
                     this.users.remove(user_details)
                     user_details['user'].close()
 
-            # Wait for 10 seconds before checking again
-            time.sleep(10)
+            # Wait for 5 seconds before checking again
+            time.sleep(5)
     
     def handle_Client(this, user, addr, user_queue):
         # Initialize user_details to None before the for loop
@@ -103,7 +103,14 @@ class Server:
         buffer = ""
         #Need an if statement here to check to see if the connection is active before trying to read data from them. populates and exception when discconnecting
         while True:
-            data = user.recv(1024).decode('ascii')
+            if not user_details.get('is_connected', True):
+                break
+            try:
+                data = user.recv(1024).decode('ascii')
+            except Exception as e:
+                print(f"Error in handle_Client: {e}")
+                this.users.remove(user_details)
+                break
             if not data:
                 break
 
@@ -170,7 +177,7 @@ class Server:
                     this.run_PRIVMSG_Command(words, user_details, message, addr)
                 
                 elif command == 'TOPIC':
-                    THIS.run_TOPIC_Command(user_details, Message)
+                    this.run_TOPIC_Command(user_details, message)
                 
                 elif command == 'PONG':
                     this.run_PONG_Command(user_details, message) 
@@ -210,9 +217,19 @@ class Server:
         user_details["realname"] = message.split(":", 1)[1].strip()  # Stripping the leading ':'
     
     def run_PING_Command(this, user_details, message):
-        parameters = message.split()[1:]
-        pong_response = 'PONG ' + ' '.join(parameters)
+        # Current time when PING is received
+        received_time = time.time()
+        
+        command, *parameters = message.split()
+        if command.upper() != "PING":
+            return
+        
+        # Extract the LAG identifier if present
+        lag_identifier = parameters[0] if parameters else None
+        
+        pong_response = f'PONG {lag_identifier}\r\n' if lag_identifier else 'PONG\r\n'
         this.safe_send(user_details['user'], pong_response)
+        
 
     def run_WHO_Command(this, user_details, message):
         parameters = message.split()[1:]
@@ -247,25 +264,35 @@ class Server:
         this.safe_send(user_details['user'], mode_response + '\r\n')
     
     def run_TOPIC_Command(this, user_details, message):
-        this.print_To_Server(user_details, "TOPIC ran", "sent")
+        params = message.split()[1:]
+        channel_name = params[0]
+        new_topic = ' '.join(params[1:])
+
+        if channel_name in this.channels:
+            this.channels[channel_name]["topic"] = new_topic
+            topic_response = f":{user_details['nick']}!{user_details['username']}@{user_details['hostname']} TOPIC {channel_name} :{new_topic}"
+            this.safe_send(user_details['user'], topic_response)
+        else:
+            # there might be an IRC code to let the sender know this
+            this.safe_send(user_details['user'], "That channel does not exist so you can't set the topic")
 
     def run_JOIN_Command(this, words, user_details):
         channel_name = words[1].strip()
         # Create the channel if it does not exist
         if channel_name not in this.channels:
-            this.channels[channel_name] = []
+            this.channels[channel_name] = {"users": [], "topic": ""}
         
         # Add the user to the channel
-        this.channels[channel_name].append(user_details)
+        this.channels[channel_name]["users"].append(user_details)
 
         this.print_To_Server(user_details, f"User {user_details['nick']} joined channel {channel_name}" , "sent")
 
         #Building the names list for the 353 command to be sent to each user
-        names_list = " ".join([u['nick'] for u in this.channels[channel_name]])
+        names_list = " ".join([u['nick'] for u in this.channels[channel_name]["users"]])
 
         # Broadcast to the other users of that server that the client has JOINed
         # This happens regularly and needs to be able to be sent more often using the LIST command I think
-        for channel_user in this.channels[channel_name]:
+        for channel_user in this.channels[channel_name]["users"]:
             this.safe_send(channel_user['user'], f":{user_details['nick']}!{user_details['username']}@{addr[0]} JOIN {channel_name}\r\n")
 
             this.safe_send(channel_user['user'], f":{user_details['hostname']} 331 {user_details['nick']} {channel_name} :No Topic is set\r\n")
@@ -281,7 +308,8 @@ class Server:
             optional_message = message.split(" ", 1)[1].strip()
 
         # Broadcast quit message to all the users channels
-        for channel_name, channel_users in this.channels.items():
+        for channel_name, channel_info in this.channels.items():
+            channel_users = channel_info["users"]
             if user_details in channel_users:
                 for channel_user in channel_users:
                     this.safe_send(channel_user['user'], f":{user_details['nick']}!{user_details['username']}@{addr[0]} QUIT :{optional_message}\r\n")
@@ -292,7 +320,7 @@ class Server:
         this.users.remove(user_details)
 
         # Close the socket
-        user.close()
+        user_details['user'].close()
         this.print_To_Server(user_details, f"user has quit. Message: {optional_message}", "sent")
     
     def run_LIST_Command(this, user_details):
@@ -300,7 +328,8 @@ class Server:
         num_users_in_channel = 0
         
         # Loop through each channel in the 'this.channels' dictionary
-        for channel_name, channel_users in this.channels.items():
+        for channel_name, channel_info in this.channels.items():
+            channel_users = channel_info["users"]
             # Count the number of users in the channel
             num_users_in_channel = len(channel_users)
             
@@ -320,7 +349,12 @@ class Server:
             # check to see if it exist
             if channel_name in this.channels:
                 # find the names
-                names_list = " ".join([u['nick'] for u in this.channels[channel_name]])
+                names_list = ""
+                for u in this.channels[channel_name]["users"]:
+                    if names_list:  # if names_list is not empty, add a space before the next nickname
+                        names_list += " "
+                    names_list += u['nick']
+                
                 
                 # Send the 353 send the info to the client
                 this.safe_send(user_details['user'], f":{user_details['hostname']} 353 {user_details['nick']} = {channel_name} :{names_list}\r\n")
@@ -329,9 +363,11 @@ class Server:
                 this.safe_send(user_details['user'], f":{user_details['hostname']} 366 {user_details['nick']} {channel_name} :End of NAMES list\r\n")
                 
         else:  # If no channel name is provided, list names for all channels
-            for channel_name, channel_users in this.channels.items():
+            for channel_name, channel_info in this.channels.items():
+                channel_users = channel_info["users"]
                 # Build the names list
                 names_list = " ".join([u['nick'] for u in channel_users])
+                
                 
                 # Send the 353 numeric reply
                 this.safe_send(user_details['user'], f":{user_details['hostname']} 353 {user_details['nick']} = {channel_name} :{names_list}\r\n")
@@ -349,7 +385,7 @@ class Server:
         if target.startswith("#"):
             if target in this.channels:  # Make sure channel exists
                 # Send the message to all users in the channel
-                for channel_user in this.channels[target]:
+                for channel_user in this.channels[target]["users"]:
                     # however you don't want to send the message twice so you need to exclude yourself as a channel_user from the channels list
                     if channel_user['addr'] != addr:
                         this.safe_send(channel_user['user'], f":{user_details['nick']}!{user_details['username']}@{addr[0]} PRIVMSG {target} :{message_text}\r\n")
