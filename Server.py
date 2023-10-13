@@ -32,7 +32,7 @@ class Server:
         # an arry of user dictionarys that contain all info needed to manage connections
         this.users = []
 
-        # dictionary for channels { "#channel_name": [list_of_users] }
+        # dictionary for channels that include users and the topics for each associated channel
         this.channels = {}
 
         # assigns the correct values to the addr and port variables of the object
