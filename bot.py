@@ -11,6 +11,7 @@ import random
 import re
 import argparse
 
+#handling the optional comand line parameters
 parser = argparse.ArgumentParser(description='IRC bot for Networking')
 parser.add_argument('--host', type=str, help='Specify the host address')
 parser.add_argument('--port', type=int, help='Specify the port number')
@@ -18,9 +19,11 @@ parser.add_argument('--name', type=str, help='Specify the name of the bot')
 parser.add_argument('--channel', type=str, help='Specify the channel for the bot')
 args = parser.parse_args()
 
+#sets the default nickname of the bot to 'SuperBot' if no nickname is specified on the command line
 nick = args.name if args.name else 'SuperBot'
 user = "ROBOT 0 * :Robot Junior"
 cap = "CAP LS 302"
+#sets a default address, port and channel
 addr = args.host if args.host else '::1'
 port = args.port if args.port else 6667
 channel = args.channel if args.channel else '#Bot_Commands'
@@ -47,6 +50,7 @@ class botUsers:
         with open('bot.txt', encoding='utf8') as f:
             bot.botTxts = [line.rstrip('\n') for line in f]
        
+    #creates the channel for the bot to join
     def createBotChannel(server, message):
         bot.server.send(bytes(f"JOIN {bot.channel}\r\n", "ascii"))
 
@@ -56,9 +60,11 @@ class botUsers:
         if message.find(f'PRIVMSG {channel} :!hello') != -1 or message.find(f'PRIVMSG {channel} :!hello') > 5:
             bot.server.send(f'PRIVMSG {channel} :Hi, how are you?\r\n'.encode("ascii"))  
 
+        #our additional bot command, which has the bot message a list of channels into the channel
         if message.find(f'PRIVMSG {channel} :!list') != -1 or message.find(f'PRIVMSG {channel} :!list') > 5:
             bot.server.send(f'LIST\r\n'.encode('ascii'))
             message = bot.server.recv(1024).decode('ascii')
+            #parse the message, to find every channel
             parsedmessage = re.findall(r'#\w+', message)
             bot.server.send(f'PRIVMSG {channel} :{parsedmessage}\r\n'.encode("ascii"))
             bot.server.send(f'PRIVMSG {channel} :List of channels displayed!\r\n'.encode("ascii"))
@@ -104,11 +110,13 @@ class botUsers:
             
             bot.sendFacts(sent_user) 
 
+    #for the random facts, we chose to use a txt file, as we had previous experience with file handling in python
     def sendFacts(bot,user):
         text = random.choice(bot.botTxts)
         print("sending fact to the user")
         bot.server.send(f'PRIVMSG {user} : {text}\r\n'.encode("ascii"))
         
+    #when a user leaves the server, we need to remove them from the list of users
     def removeUser(bot,nick,channel):
         nicks = []
         if nick in bot.nicks:
@@ -116,6 +124,7 @@ class botUsers:
 
         bot.server.send(f"KICK {nick} from {channel} channel".encode())  
 
+    #when a user joins the server, we need to add them to the list of users
     def join(bot,nick,channel):
         try:
             nicks = []
@@ -128,11 +137,13 @@ class botUsers:
     def SlapRandom(bot, nick_list,sent_user):
         random_user = f"{bot.nick}"
         if len(nick_list) > 2:
+            #ensures that the randomly selected user is not the user who sent the message, or the bot itself
             while random_user == sent_user or random_user == f"{bot.nick}":
                 random_user = random.choice(nick_list)
             
             bot.server.send(f'PRIVMSG {bot.channel} : {bot.nick} slaps {random_user} around a bit with a large trout\r\n'.encode("ascii"))
         else:
+            #if only the one user is in the channel, the bot will slap them and tell them to only slap when there are other users
             bot.server.send(f'PRIVMSG {bot.channel} : {bot.nick} slaps {sent_user} around a bit with a large trout. Next time make sure there is someone else to slap!\r\n'.encode("ascii"))
             
     def SlapUser(bot, targetname):
@@ -173,12 +184,8 @@ class botUsers:
                     bot.has_created_channel = True
 
             else:
+                #if the message received is not a PING, or a registration commnad, the bot should be listening for the bot commands
                 bot.listeningFor(message)
-
-    def write(bot):
-        while True:
-            message = input("")
-            bot.server.send(f'{bot.nick}: {message}'.encode('ascii'))
 
 bot = botUsers(nick, cap, addr, port)
 bot.launch()
